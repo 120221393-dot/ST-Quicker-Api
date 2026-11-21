@@ -6,7 +6,7 @@
 
 .quicker-api {
     margin: 0.2rem 0 0.3rem;
-    padding: 0.4rem 0.5rem;
+    padding: 0.4rem 0.1rem;
     border: 1px solid var(--SmartThemeBorderColor);
     border-radius: 8px;
     background: color-mix(in srgb, var(--SmartThemeBlurTintColor) 82%, transparent);
@@ -316,6 +316,13 @@
 
 .quicker-api__url-row {
     flex-wrap: nowrap;
+    align-items: stretch;
+}
+
+/* 快捷 URL 按钮与输入框同高。 */
+.quicker-api__url-row > #quicker_api_quick_url {
+    min-height: 0;
+    height: auto;
 }
 
 .quicker-api__url-row > #quicker_api_url {
@@ -1503,7 +1510,7 @@ dialog.popup:has(.quicker-api__placement-popup) .popup-controls {
 
 @media (max-width: 560px) {
     .quicker-api {
-        padding: 0.55rem;
+        padding: 0.5rem 0.1rem;
     }
 
     .quicker-api__field {
@@ -1573,7 +1580,6 @@ dialog.popup:has(.quicker-api__placement-popup) .popup-controls {
     .quicker-api__key-actions .menu_button {
         width: auto;
         min-width: 2.1rem;
-        min-height: 2.1rem;
         padding: 0 0.45rem;
     }
 
@@ -1602,7 +1608,6 @@ dialog.popup:has(.quicker-api__placement-popup) .popup-controls {
     #quicker_api_quick_url {
         width: 2.2rem;
         min-width: 2.2rem;
-        min-height: 2.2rem;
         padding-inline: 0;
     }
 
