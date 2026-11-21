@@ -60,7 +60,6 @@
 
 .quicker-api__brand {
     flex: 0 1 auto;
-    color: #dc2626;
 }
 
 .quicker-api__summary {
@@ -131,11 +130,13 @@
 
 .quicker-api__field > label {
     font-weight: 600;
+    color: #dc2626;
 }
 
 .quicker-api__caption {
     font-weight: 600;
     white-space: nowrap;
+    color: #dc2626;
 }
 
 /* 配置字段：配置 / 操作 两行，各带左侧说明。 */
