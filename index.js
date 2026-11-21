@@ -896,15 +896,41 @@ function buildNativeCollapse() {
         }
     });
 
-    // Collapsed by default; once expanded the choice is remembered.
+    // Collapsed by default; once expanded the choice is remembered. 原生界面模式下
+    // 必须展开：插件面板已隐藏，原生设置再折叠，API 页面就只剩标题行。
     let collapsed = true;
     try {
         collapsed = globalThis.localStorage.getItem(NATIVE_COLLAPSED_STORAGE_KEY) !== '0';
     } catch {
         // Storage may be blocked; fall back to the default (collapsed).
     }
+    if (settings()?.nativeUi) collapsed = false;
     body.hidden = collapsed;
     render();
+}
+
+// 插件面板不可见时（原生界面模式、或当前补全源不受支持），折叠的原生设置会让
+// API 页面变空。expanded=true 立刻展开；persist 才会改写用户记住的折叠偏好。
+function applyNativeCollapseState(expanded, { persist = false } = {}) {
+    const body = document.getElementById('quicker_api_native_collapse_body');
+    const input = document.getElementById('quicker_api_native_collapse_input');
+    if (!body) return;
+    body.hidden = !expanded;
+    if (input) input.checked = expanded;
+    if (!persist) return;
+    try {
+        globalThis.localStorage.setItem(NATIVE_COLLAPSED_STORAGE_KEY, expanded ? '0' : '1');
+    } catch {
+        // 折叠状态记忆失败不应影响功能。
+    }
+}
+
+function storedNativeCollapsed() {
+    try {
+        return globalThis.localStorage.getItem(NATIVE_COLLAPSED_STORAGE_KEY) !== '0';
+    } catch {
+        return true;
+    }
 }
 
 function readBrowserPanelState() {
@@ -6139,6 +6165,8 @@ function nativeProviderEditors() {
 function updatePanelVisibility() {
     const supported = SUPPORTED_SOURCES.has(String($('#chat_completion_source').val()));
     $('#quicker_api').toggle(supported);
+    // 面板隐藏时不能让原生设置继续折叠，否则用户看到的是一张空页面。
+    if (!supported) applyNativeCollapseState(true);
     updateAdditionalParametersButton();
     nativeProviderEditors().toggleClass('quicker-api__native-provider', supported && !settings().nativeUi);
     renderPanelMode();
@@ -6162,6 +6190,8 @@ async function setNativeUi(nativeUi) {
     closeQuickUrlMenu();
     settings().nativeUi = nativeUi;
     scheduleSettingsSave();
+    // 原生界面模式必须能看到原生设置；切回插件界面时恢复用户记住的折叠偏好。
+    applyNativeCollapseState(nativeUi ? true : !storedNativeCollapsed());
     updatePanelVisibility();
     if (nativeUi) return;
     await enqueueOperation(async () => {
