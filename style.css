@@ -1,0 +1,2962 @@
+/* Shared by the panel, its popups and portaled dropdowns. */
+:root {
+    --quicker-api-success: color-mix(in srgb, #35d06f 72%, var(--SmartThemeBodyColor));
+    --quicker-api-danger: color-mix(in srgb, #ff4f5e 76%, var(--SmartThemeBodyColor));
+}
+
+.quicker-api {
+    margin: 0.2rem 0 0.3rem;
+    padding: 0.4rem 0.5rem;
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--SmartThemeBlurTintColor) 82%, transparent);
+}
+
+.quicker-api__title,
+.quicker-api__row,
+.quicker-api__status {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.quicker-api__title {
+    justify-content: space-between;
+    margin-bottom: 0.2rem;
+    font-weight: 600;
+}
+
+.quicker-api__toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 1.6rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    touch-action: manipulation;
+}
+
+.quicker-api__toggle:focus-visible {
+    outline: 2px solid var(--SmartThemeQuoteColor);
+    outline-offset: 3px;
+}
+
+/* Shrink-to-fit so the collapse chevron hugs the brand text; the summary
+   still stretches to fill whatever space is left. */
+.quicker-api__brand,
+.quicker-api__summary {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.quicker-api__brand {
+    flex: 0 1 auto;
+}
+
+.quicker-api__summary {
+    flex: 1 1 auto;
+}
+
+.quicker-api__summary,
+.quicker-api.is-collapsed .quicker-api__brand,
+#quicker_api_body[hidden] {
+    display: none !important;
+}
+
+.quicker-api.is-collapsed .quicker-api__summary {
+    display: block !important;
+}
+
+.quicker-api.is-collapsed .quicker-api__title {
+    margin-bottom: 0;
+}
+
+.quicker-api.is-collapsed .quicker-api__chevron {
+    transform: rotate(180deg);
+}
+
+.quicker-api__chevron {
+    flex: 0 0 auto;
+}
+
+.quicker-api__native-hint,
+.quicker-api.is-native-ui #quicker_api_body,
+.quicker-api.is-native-ui .quicker-api__summary,
+.quicker-api.is-native-ui .quicker-api__chevron {
+    display: none !important;
+}
+
+.quicker-api.is-native-ui .quicker-api__brand {
+    display: block !important;
+    flex: 0 1 auto;
+}
+
+.quicker-api.is-native-ui .quicker-api__native-hint {
+    display: block !important;
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    font-size: 0.85em;
+    font-weight: 400;
+    opacity: 0.7;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.quicker-api.is-native-ui .quicker-api__title {
+    margin-bottom: 0;
+}
+
+.quicker-api.is-native-ui .quicker-api__toggle {
+    cursor: default;
+}
+
+.quicker-api__field {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 0.25rem;
+    margin-top: 0.08rem;
+}
+
+.quicker-api__field > label {
+    font-weight: 600;
+}
+
+.quicker-api__caption {
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* 配置字段：配置 / 操作 两行，各带左侧说明。 */
+.quicker-api__profile-field > label,
+.quicker-api__profile-field > .quicker-api__caption {
+    grid-column: 1;
+}
+
+.quicker-api__profile-select-row {
+    grid-column: 2;
+    grid-row: 1;
+}
+
+.quicker-api__profile-actions-row {
+    grid-column: 2;
+    grid-row: 2;
+}
+
+.quicker-api__profile-actions-row > .menu_button {
+    flex: 0 0 auto;
+}
+
+/* “选择”说明只在模型选择器独占一行（窄屏）时出现。 */
+.quicker-api__model-caption {
+    display: none;
+}
+
+.quicker-api__row {
+    min-width: 0;
+    flex-wrap: wrap;
+}
+
+.quicker-api__mobile-label {
+    display: none !important;
+}
+
+/* "插件启用" / "联动预设": compact pill switches. The host styles every
+   checkbox (input[type='checkbox']), so the hidden input needs a selector that
+   outranks it, or it keeps taking space at the switch's left edge. */
+.quicker-api__switch {
+    position: relative;
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 0.3rem;
+    width: auto;
+    margin: 0;
+    padding: 0.15rem 0.5rem 0.15rem 0.25rem;
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--SmartThemeBlurTintColor) 80%, transparent);
+    color: var(--SmartThemeBodyColor);
+    font-size: 0.85em;
+    font-weight: normal;
+    line-height: 1.2;
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+    transition: border-color 0.18s ease, background-color 0.18s ease, color 0.18s ease;
+}
+
+.quicker-api__switch:hover {
+    border-color: color-mix(in srgb, var(--SmartThemeQuoteColor) 60%, var(--SmartThemeBorderColor));
+}
+
+.quicker-api__switch > input[type='checkbox'].quicker-api__switch-input {
+    position: absolute;
+    inset: 0;
+    width: 1px;
+    height: 1px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    box-shadow: none;
+    transform: none;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.quicker-api__switch-track {
+    position: relative;
+    flex: 0 0 auto;
+    width: 1.9rem;
+    height: 1.1rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--SmartThemeBodyColor) 22%, transparent);
+    transition: background-color 0.18s ease;
+}
+
+.quicker-api__switch-thumb {
+    position: absolute;
+    top: 0.15rem;
+    left: 0.15rem;
+    width: 0.8rem;
+    height: 0.8rem;
+    border-radius: 50%;
+    background: var(--SmartThemeBodyColor);
+    box-shadow: 0 1px 3px #0006;
+    transition: transform 0.18s ease;
+}
+
+.quicker-api__switch-label {
+    opacity: 0.8;
+}
+
+.quicker-api__switch:has(.quicker-api__switch-input:checked) {
+    border-color: color-mix(in srgb, var(--quicker-api-success) 70%, var(--SmartThemeBorderColor));
+    background: color-mix(in srgb, var(--quicker-api-success) 14%, var(--SmartThemeBlurTintColor));
+}
+
+.quicker-api__switch-input:checked + .quicker-api__switch-track {
+    background: var(--quicker-api-success);
+}
+
+.quicker-api__switch-input:checked + .quicker-api__switch-track > .quicker-api__switch-thumb {
+    transform: translateX(0.8rem);
+}
+
+.quicker-api__switch:has(.quicker-api__switch-input:checked) .quicker-api__switch-label {
+    color: var(--quicker-api-success);
+    opacity: 1;
+}
+
+.quicker-api__switch:has(.quicker-api__switch-input:focus-visible) {
+    outline: 2px solid var(--SmartThemeQuoteColor);
+    outline-offset: 2px;
+}
+
+.quicker-api__switch:has(.quicker-api__switch-input:disabled) {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+.quicker-api__preset-link {
+    margin-left: 0.35rem;
+}
+
+/* Panel-header switches ("插件启用" / "酒馆设置"): one size smaller so the
+   title row can carry both without crowding. */
+.quicker-api__title-switches {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 0.25rem;
+    min-width: 0;
+}
+
+.quicker-api__switch--sm {
+    gap: 0.22rem;
+    padding: 0.08rem 0.34rem 0.08rem 0.18rem;
+    font-size: 0.72em;
+}
+
+.quicker-api__switch--sm .quicker-api__switch-track {
+    width: 1.45rem;
+    height: 0.85rem;
+}
+
+.quicker-api__switch--sm .quicker-api__switch-thumb {
+    top: 0.12rem;
+    left: 0.12rem;
+    width: 0.61rem;
+    height: 0.61rem;
+}
+
+.quicker-api__switch--sm .quicker-api__switch-input:checked + .quicker-api__switch-track > .quicker-api__switch-thumb {
+    transform: translateX(0.6rem);
+}
+
+.quicker-api__row > .text_pole,
+.quicker-api__row > select,
+#quicker_api_profile_select,
+#quicker_api_url,
+#quicker_api_format {
+    min-width: 10rem;
+    flex: 1 1 14rem;
+}
+
+.quicker-api__url-row {
+    flex-wrap: nowrap;
+}
+
+.quicker-api__url-row > #quicker_api_url {
+    min-width: 0;
+}
+
+.quicker-api__quick-url-portal {
+    display: contents !important;
+}
+
+.quicker-api__quick-url-menu {
+    position: fixed;
+    z-index: 10020;
+    display: flex;
+    max-height: min(70dvh, 34rem);
+    overflow-x: hidden;
+    overflow-y: auto;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 0.45rem;
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 9px;
+    background: var(--SmartThemeBlurTintColor);
+    box-shadow: 0 0.55rem 1.5rem rgb(0 0 0 / 35%);
+    color: var(--SmartThemeBodyColor);
+}
+
+.quicker-api__quick-url-heading {
+    padding: 0.35rem 0.45rem 0.2rem;
+    font-size: 0.78em;
+    font-weight: 700;
+    opacity: 0.72;
+}
+
+.quicker-api__quick-url-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: stretch;
+    gap: 0.2rem;
+}
+
+.quicker-api__quick-url-select,
+.quicker-api__quick-url-delete,
+.quicker-api__quick-url-add {
+    border: 1px solid transparent;
+    border-radius: 7px;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+}
+
+.quicker-api__quick-url-select {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: minmax(5.5rem, auto) minmax(0, 1fr);
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.45rem 0.55rem;
+    text-align: left;
+}
+
+.quicker-api__quick-url-select strong,
+.quicker-api__quick-url-select small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.quicker-api__quick-url-select small {
+    opacity: 0.68;
+}
+
+.quicker-api__quick-url-delete {
+    width: 2.25rem;
+    padding: 0;
+    color: var(--quicker-api-danger, #ff6673);
+}
+
+.quicker-api__quick-url-add {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    min-height: 2.3rem;
+    margin-top: 0.2rem;
+    border-color: var(--SmartThemeBorderColor);
+}
+
+.quicker-api__quick-url-select:hover,
+.quicker-api__quick-url-select:focus-visible,
+.quicker-api__quick-url-delete:hover,
+.quicker-api__quick-url-delete:focus-visible,
+.quicker-api__quick-url-add:hover,
+.quicker-api__quick-url-add:focus-visible {
+    border-color: var(--SmartThemeQuoteColor);
+    background: color-mix(in srgb, var(--SmartThemeQuoteColor) 14%, transparent);
+    outline: none;
+}
+
+.quicker-api__quick-url-editor {
+    display: grid;
+    width: min(32rem, calc(100dvw - 4rem));
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    gap: 0.75rem;
+    text-align: left;
+}
+
+.quicker-api__quick-url-editor label {
+    display: grid;
+    max-width: 100%;
+    min-width: 0;
+    gap: 0.3rem;
+    font-weight: 600;
+}
+
+.quicker-api__quick-url-editor .text_pole {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+.quicker-api__exclude-only-popup {
+    min-height: min(32rem, 70dvh);
+}
+
+.quicker-api__exclude-only-hint {
+    display: block;
+    margin: 0 0 0.65rem;
+    opacity: 0.75;
+}
+
+.quicker-api__exclude-only-popup #custom_exclude_body {
+    min-height: 14rem;
+}
+
+.quicker-api__secret-masked {
+    -webkit-text-security: disc;
+}
+
+.quicker-api__key-actions {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.quicker-api__key-help {
+    flex: 0 0 auto;
+    padding: 0.3rem;
+    color: var(--SmartThemeQuoteColor);
+    cursor: help;
+    opacity: 0.85;
+}
+
+.quicker-api__key-help:hover,
+.quicker-api__key-help:focus-visible {
+    opacity: 1;
+    outline: 2px solid var(--SmartThemeQuoteColor);
+    outline-offset: 2px;
+    border-radius: 50%;
+}
+
+.quicker-api__key-help-tooltip {
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + 0.55rem);
+    z-index: 10030;
+    display: none;
+    width: min(28rem, calc(100dvw - 2rem));
+    max-width: 80dvw;
+    padding: 0.75rem 0.9rem;
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 8px;
+    background: var(--SmartThemeBlurTintColor);
+    box-shadow: 0 0.45rem 1.25rem rgb(0 0 0 / 35%);
+    color: var(--SmartThemeBodyColor);
+    font-family: var(--mainFontFamily);
+    font-size: 0.88rem;
+    font-weight: 400;
+    line-height: 1.45;
+    text-align: left;
+    white-space: normal;
+}
+
+.quicker-api__key-help:hover + .quicker-api__key-help-tooltip,
+.quicker-api__key-help:focus + .quicker-api__key-help-tooltip,
+.quicker-api__key-help-tooltip:hover {
+    display: block;
+}
+
+.quicker-api__key-help-tooltip p {
+    margin: 0.35rem 0;
+}
+
+.quicker-api__key-help-tooltip ul {
+    margin: 0.3rem 0;
+    padding-left: 1.25rem;
+}
+
+.quicker-api__key-help-tooltip pre {
+    margin: 0.45rem 0;
+    padding: 0.55rem 0.65rem;
+    overflow-x: auto;
+    border: 1px solid color-mix(in srgb, var(--SmartThemeBorderColor) 75%, transparent);
+    border-radius: 6px;
+    background: color-mix(in srgb, #000 24%, transparent);
+}
+
+.quicker-api__key-help-tooltip code {
+    font-family: var(--monoFontFamily, monospace);
+}
+
+.quicker-api .menu_button,
+.quicker-api__model-manager .menu_button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    min-width: 1.6rem;
+    min-height: 1.6rem;
+    padding-block: 0.15rem;
+    line-height: 1.15;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.quicker-api .menu_button > span,
+.quicker-api__model-manager .menu_button > span {
+    display: inline-flex;
+    align-items: center;
+    line-height: 1.15;
+}
+
+.quicker-api__icon-button {
+    flex: 0 0 1.7rem;
+    width: 1.7rem;
+    padding-inline: 0;
+}
+
+.quicker-api__text-button {
+    white-space: nowrap;
+}
+
+.quicker-api__save-button {
+    color: var(--quicker-api-success);
+    border-color: color-mix(in srgb, var(--quicker-api-success) 68%, var(--SmartThemeBorderColor));
+}
+
+.quicker-api__save-button:hover:not(:disabled) {
+    border-color: var(--quicker-api-success);
+    background: color-mix(in srgb, var(--quicker-api-success) 12%, var(--SmartThemeBlurTintColor));
+}
+
+.quicker-api__delete-button {
+    color: var(--quicker-api-danger);
+    border-color: color-mix(in srgb, var(--quicker-api-danger) 70%, var(--SmartThemeBorderColor));
+}
+
+.quicker-api__delete-button:hover:not(:disabled) {
+    border-color: var(--quicker-api-danger);
+    background: color-mix(in srgb, var(--quicker-api-danger) 12%, var(--SmartThemeBlurTintColor));
+}
+
+.quicker-api__status {
+    min-height: 1.4em;
+    margin-top: 0.2rem;
+    color: var(--SmartThemeBodyColor);
+    opacity: 0.82;
+    font-size: 0.85em;
+    overflow-wrap: anywhere;
+}
+
+.quicker-api__status[data-state="warning"] {
+    color: var(--warning-color, #e6a23c);
+    opacity: 1;
+}
+
+/* 保留原生节点与事件，只隐藏三类来源的重复表单及原生反向代理区。 */
+#custom_form.quicker-api__native-provider,
+#claude_form.quicker-api__native-provider,
+#makersuite_form.quicker-api__native-provider,
+.inline-drawer.quicker-api__native-provider {
+    display: none !important;
+}
+
+/* 折叠插件上方的酒馆原生 API 设置：只移动节点、不删除，展开即可恢复。
+   开关位于面板标题行（与 插件启用 并列），这里只承载被折叠的原生节点。 */
+.quicker-api__native-collapse {
+    margin: 0.15rem 0 0.25rem;
+}
+
+.quicker-api__native-collapse-body[hidden] {
+    display: none !important;
+}
+
+.quicker-api__native-collapse-body {
+    padding: 0.25rem 0.45rem 0.3rem;
+    border: 1px solid color-mix(in srgb, var(--SmartThemeBorderColor) 60%, transparent);
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--SmartThemeBlurTintColor) 55%, transparent);
+}
+
+.quicker-api__model-manager {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    width: min(92vw, 76rem);
+    max-width: 100%;
+    color: var(--SmartThemeBodyColor);
+    text-align: left;
+}
+
+.quicker-api__manager-note {
+    padding: 0.6rem 0.75rem;
+    border: 1px solid color-mix(in srgb, var(--SmartThemeBorderColor) 75%, transparent);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--SmartThemeBlurTintColor) 70%, transparent);
+    opacity: 0.9;
+}
+
+.quicker-api__manager-columns {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0.8rem;
+    min-height: min(58vh, 36rem);
+}
+
+.quicker-api__manager-panel {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.55rem;
+    padding: 0.7rem;
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--SmartThemeBlurTintColor) 88%, transparent);
+}
+
+.quicker-api__manager-panel h4 {
+    margin: 0;
+    text-align: center;
+}
+
+.quicker-api__manager-actions {
+    display: flex;
+    align-items: stretch;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+}
+
+.quicker-api__manager-actions > .text_pole {
+    min-width: 10rem;
+    flex: 1 1 12rem;
+}
+
+.quicker-api__manager-actions > .menu_button {
+    flex: 1 1 auto;
+    min-height: 2.15rem;
+}
+
+.quicker-api__model-search {
+    display: flex;
+    align-items: stretch;
+    flex-wrap: nowrap;
+    gap: 0.4rem;
+    min-width: 0;
+}
+
+.quicker-api__model-manager .quicker-api__model-search > input,
+.quicker-api__model-manager .quicker-api__model-search > button {
+    box-sizing: border-box;
+    height: 2.4rem;
+    min-height: 2.4rem;
+    margin: 0;
+    align-self: stretch;
+}
+
+.quicker-api__model-search > input {
+    flex: 1 1 0;
+    width: 0;
+    min-width: 0;
+    max-width: 100%;
+    margin: 0;
+}
+
+.quicker-api__model-search > button {
+    flex: 0 0 auto;
+}
+
+.quicker-api__model-search-help,
+.quicker-api__model-search-count {
+    text-align: left;
+    overflow-wrap: anywhere;
+    opacity: 0.8;
+}
+
+.quicker-api__model-list {
+    display: flex;
+    min-height: 7rem;
+    max-height: 52vh;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 0.38rem;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 0.15rem;
+}
+
+.quicker-api__model-item {
+    display: grid;
+    align-items: center;
+    gap: 0.48rem;
+    padding: 0.45rem 0.52rem;
+    border: 1px solid color-mix(in srgb, var(--SmartThemeBorderColor) 82%, transparent);
+    border-radius: 7px;
+    background: color-mix(in srgb, var(--SmartThemeBlurTintColor) 62%, transparent);
+}
+
+.quicker-api__model-item small {
+    opacity: 0.68;
+    white-space: nowrap;
+}
+
+.quicker-api__model-list > [hidden] {
+    display: none !important;
+}
+
+/* Long lists: skip layout/paint for rows scrolled out of view. */
+.quicker-api__model-manager .quicker-api__model-item {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 2.6rem;
+}
+
+.quicker-api__remote-model {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    cursor: pointer;
+    user-select: none;
+}
+
+.quicker-api__remote-model:hover,
+.quicker-api__remote-model:focus-visible {
+    border-color: color-mix(in srgb, var(--SmartThemeQuoteColor) 72%, var(--SmartThemeBorderColor));
+    background: color-mix(in srgb, var(--SmartThemeQuoteColor) 14%, var(--SmartThemeBlurTintColor));
+    outline: none;
+}
+
+.quicker-api__remote-model[aria-checked="true"] {
+    border-color: color-mix(in srgb, var(--quicker-api-success) 78%, var(--SmartThemeBorderColor));
+    background: color-mix(in srgb, var(--quicker-api-success) 18%, var(--SmartThemeBlurTintColor));
+}
+
+.quicker-api__remote-model > input[type="checkbox"] {
+    width: 1.15rem;
+    height: 1.15rem;
+    accent-color: var(--quicker-api-success);
+    pointer-events: none;
+}
+
+.quicker-api__chosen-model {
+    /* The name input truncates by itself; never let it push the actions out of a narrow column. */
+    grid-template-columns: 1.7rem minmax(3rem, 1fr) auto auto;
+}
+
+.quicker-api__chosen-model > small {
+    white-space: nowrap;
+}
+
+.quicker-api__chosen-model > .text_pole {
+    min-width: 0;
+    width: 100%;
+}
+
+/* The manager column can be narrow even on wide screens: size by the list, not the viewport. */
+.quicker-api__model-list {
+    container-type: inline-size;
+}
+
+@container (max-width: 24rem) {
+    .quicker-api__chosen-model {
+        grid-template-columns: 1.7rem minmax(0, 1fr) auto;
+    }
+
+    .quicker-api__chosen-model > .quicker-api__item-actions {
+        grid-column: 2 / -1;
+        justify-content: flex-end;
+    }
+}
+
+.quicker-api__chosen-model > .text_pole[readonly] {
+    border-color: transparent;
+    background: transparent;
+    cursor: default;
+}
+
+.quicker-api__drag-index {
+    display: inline-grid;
+    width: 1.55rem;
+    height: 1.55rem;
+    place-items: center;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--SmartThemeQuoteColor) 20%, transparent);
+    font-size: 0.78em;
+    opacity: 0.8;
+}
+
+.quicker-api__item-actions {
+    display: inline-flex;
+    gap: 0.2rem;
+}
+
+.quicker-api__item-actions .menu_button {
+    min-width: 1.9rem;
+    padding-inline: 0.42rem;
+}
+
+.quicker-api__empty-state {
+    display: grid;
+    min-height: 6rem;
+    place-items: center;
+    padding: 1rem;
+    border: 1px dashed var(--SmartThemeBorderColor);
+    border-radius: 7px;
+    opacity: 0.65;
+    text-align: center;
+}
+
+.quicker-api__migration {
+    width: 100%;
+    max-width: 100%;
+    gap: 0.45rem;
+}
+
+.quicker-api__migration .quicker-api__remote-model {
+    grid-template-columns: auto minmax(0, 1fr);
+}
+
+.quicker-api__migration-summary {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    line-height: 1.3;
+}
+
+.quicker-api__migration .quicker-api__model-list {
+    min-height: 0;
+    max-height: 44vh;
+}
+
+dialog.popup:has(.quicker-api__model-manager) .popup-controls {
+    gap: 0.55rem;
+}
+
+dialog.popup:has(.quicker-api__model-manager) .popup-controls .menu_button {
+    display: inline-flex;
+    min-width: 5rem;
+    min-height: 2.2rem;
+    align-items: center;
+    justify-content: center;
+    padding: 0.42rem 0.9rem;
+    line-height: 1.15;
+    filter: none !important;
+    box-shadow: none !important;
+    transform: none !important;
+    transition: none !important;
+}
+
+dialog.popup:has(.quicker-api__model-manager) .popup-controls .menu_button:hover,
+dialog.popup:has(.quicker-api__model-manager) .popup-controls .menu_button:focus-visible {
+    filter: none !important;
+    transform: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .quicker-api *,
+    .quicker-api__model-manager * {
+        animation: none !important;
+        scroll-behavior: auto !important;
+        transition: none !important;
+    }
+}
+
+@media (max-width: 850px) {
+    .quicker-api__manager-columns {
+        grid-template-columns: 1fr;
+    }
+
+    .quicker-api__model-list {
+        max-height: 38vh;
+    }
+}
+
+/* Manager page tabs: only on narrow screens, where one panel is shown at a time. */
+.quicker-api__manager-pages {
+    display: none;
+}
+
+@media (max-width: 850px) {
+    /* Fit the dialog: only the active list scrolls, never the popup itself.
+       The host popup clips its content (overflow: hidden), so the manager must fit:
+       popup max-height 100dvh - 2em, minus padding, content margin and the button row. */
+    .quicker-api__model-manager--paged {
+        box-sizing: border-box;
+        height: calc(100vh - 7.5rem);
+        height: calc(100dvh - 7.5rem);
+        gap: 0.5rem;
+    }
+
+    .quicker-api__model-manager--paged .quicker-api__manager-note {
+        padding: 0.35rem 0.55rem;
+        font-size: 0.88em;
+    }
+
+    .quicker-api__manager-pages {
+        display: grid;
+        flex: 0 0 auto;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.35rem;
+    }
+
+    .quicker-api__manager-pages > button {
+        display: inline-flex;
+        /* The host .menu_button is width: fit-content; fill each half of the row. */
+        box-sizing: border-box;
+        width: 100%;
+        min-width: 0;
+        min-height: 2.4rem;
+        margin: 0;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        opacity: 0.75;
+    }
+
+    .quicker-api__manager-pages > button.is-active {
+        border-color: color-mix(in srgb, var(--SmartThemeQuoteColor) 75%, var(--SmartThemeBorderColor));
+        background: color-mix(in srgb, var(--SmartThemeQuoteColor) 22%, var(--SmartThemeBlurTintColor));
+        opacity: 1;
+    }
+
+    .quicker-api__manager-pages > button > small {
+        opacity: 0.75;
+    }
+
+    .quicker-api__manager-pages > button.has-stale > small {
+        color: color-mix(in srgb, #ffae35 82%, var(--SmartThemeBodyColor));
+        opacity: 1;
+    }
+
+    .quicker-api__model-manager--paged[data-page="remote"] .quicker-api__manager-panel[data-page="chosen"],
+    .quicker-api__model-manager--paged[data-page="chosen"] .quicker-api__manager-panel[data-page="remote"] {
+        display: none;
+    }
+
+    .quicker-api__model-manager--paged .quicker-api__manager-columns {
+        display: flex;
+        min-height: 0;
+        flex: 1 1 auto;
+        flex-direction: column;
+    }
+
+    .quicker-api__model-manager--paged .quicker-api__manager-panel {
+        min-height: 0;
+        flex: 1 1 auto;
+        padding: 0.55rem;
+        overflow: hidden;
+    }
+
+    .quicker-api__model-manager--paged .quicker-api__manager-panel > h4 {
+        display: none;
+    }
+
+    .quicker-api__model-manager--paged .quicker-api__model-list {
+        min-height: 0;
+        max-height: none;
+        flex: 1 1 auto;
+    }
+}
+
+@media (max-width: 700px) {
+    .quicker-api__field {
+        grid-template-columns: 1fr;
+        gap: 0.25rem;
+    }
+
+    .quicker-api__row {
+        align-items: stretch;
+    }
+
+    .quicker-api__row > .text_pole,
+    .quicker-api__row > select {
+        flex-basis: 100%;
+    }
+
+    .quicker-api__chosen-model {
+        grid-template-columns: 1.7rem minmax(0, 1fr) auto;
+    }
+
+    .quicker-api__chosen-model > small {
+        display: none;
+    }
+
+    .quicker-api__item-actions {
+        grid-column: 2 / -1;
+        justify-content: flex-end;
+    }
+}
+
+/* v3.4 便捷方案：静态背景，不使用 glow、位移或 transform。 */
+.quicker-api__quick-entry {
+    box-shadow: none !important;
+    filter: none !important;
+    transition: none !important;
+}
+
+#quicker_api_quick_left,
+#quicker_api_quick_right {
+    flex: 0 0 var(--bottomFormBlockSize);
+    width: var(--bottomFormBlockSize);
+    height: var(--bottomFormBlockSize);
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--SmartThemeBodyColor);
+    cursor: pointer;
+    opacity: 0.7;
+}
+
+#quicker_api_quick_left {
+    order: 5;
+}
+
+#quicker_api_quick_right {
+    order: 1;
+}
+
+#quicker_api_quick_left:hover,
+#quicker_api_quick_left:focus-visible,
+#quicker_api_quick_right:hover,
+#quicker_api_quick_right:focus-visible {
+    opacity: 1;
+    filter: none !important;
+}
+
+.qr--buttons > [data-quicker-api-qr-entry] {
+    position: relative;
+    width: auto;
+    padding: 0.35rem 0.55rem;
+    background: color-mix(in srgb, var(--SmartThemeBlurTintColor) 82%, transparent);
+    color: var(--SmartThemeBodyColor);
+    cursor: pointer;
+}
+
+.quicker-api__quick-menu {
+    z-index: 10050;
+    width: max-content;
+    min-width: 9rem;
+    max-width: min(18rem, calc(100vw - 1rem));
+    max-height: min(28rem, calc(100vh - 1rem));
+    margin: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 0;
+    background: var(--SmartThemeBlurTintColor);
+    color: var(--SmartThemeBodyColor);
+    box-shadow: none !important;
+    filter: none !important;
+    list-style: none;
+    transition: none !important;
+}
+
+.quicker-api__quick-menu > .list-group-item {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    overflow: hidden;
+    padding: 5px;
+    column-gap: 10px;
+}
+
+.quicker-api__quick-menu > [data-quicker-api-actionable="true"] {
+    cursor: pointer;
+}
+
+.quicker-api__quick-menu > [data-quicker-api-actionable="true"]:focus-visible {
+    opacity: 1;
+    outline: 1px solid var(--SmartThemeQuoteColor);
+    outline-offset: -1px;
+}
+
+.quicker-api__quick-menu .qr--button-icon {
+    flex: 0 0 1rem;
+    text-align: center;
+}
+
+.quicker-api__quick-menu .qr--button-icon.qr--hidden {
+    display: none;
+}
+
+.quicker-api__quick-menu .qr--button-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.quicker-api__quick-menu-empty {
+    cursor: default !important;
+    opacity: 0.7;
+}
+
+.quicker-api__quick-manage {
+    border-bottom: 1px solid var(--SmartThemeBorderColor);
+    font-weight: 700;
+}
+
+dialog.popup:has(.quicker-api__quick-manager) {
+    width: min(96dvw, 82rem);
+    height: min(82dvh, 46rem) !important;
+    min-height: 0;
+    max-height: calc(100dvh - 1rem);
+    padding: 0.6rem;
+    box-sizing: border-box;
+}
+
+dialog.popup:has(.quicker-api__quick-manager) .popup-body,
+dialog.popup:has(.quicker-api__quick-manager) .popup-content {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    max-height: none;
+}
+
+dialog.popup:has(.quicker-api__quick-manager) .popup-content {
+    margin-top: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+.quicker-api__quick-manager {
+    display: flex;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    gap: 0.7rem;
+    color: var(--SmartThemeBodyColor);
+    text-align: left;
+}
+
+dialog.popup:has(.quicker-api__quick-manager) .popup-button-close,
+dialog.popup:has(.quicker-api__quick-manager) .popup-controls {
+    display: none !important;
+}
+
+.quicker-api__quick-header,
+.quicker-api__quick-header-actions,
+.quicker-api__quick-toolbar,
+.quicker-api__quick-editor-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.quicker-api__quick-header {
+    min-width: 0;
+    flex: 0 0 auto;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid var(--SmartThemeBorderColor);
+}
+
+.quicker-api__quick-title {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 1.08em;
+    font-weight: 700;
+}
+
+.quicker-api__quick-header-actions {
+    flex: 0 0 auto;
+    flex-wrap: wrap;
+    max-width: 100%;
+}
+
+.quicker-api__quick-header-actions > .menu_button {
+    flex-shrink: 0;
+    margin: 0;
+}
+
+.quicker-api__quick-title > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.quicker-api__quick-header .menu_button,
+.quicker-api__quick-toolbar .menu_button,
+.quicker-api__quick-editor-actions .menu_button,
+.quicker-api__placement-popup .menu_button {
+    display: inline-flex;
+    width: auto;
+    min-width: 2.2rem;
+    min-height: 2.2rem;
+    flex-shrink: 0;
+    white-space: nowrap;
+    margin: 0;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    box-shadow: none !important;
+    filter: none !important;
+    transform: none !important;
+    transition: none !important;
+}
+
+/* In the quick-action manager green means "there is something to save":
+   both save buttons stay neutral until their draft differs. */
+.quicker-api__quick-manager .quicker-api__save-button {
+    color: var(--SmartThemeBodyColor);
+    border-color: var(--SmartThemeBorderColor);
+}
+
+.quicker-api__quick-header .quicker-api__save-button.is-dirty,
+.quicker-api__quick-editor.has-unsaved-detail .quicker-api__quick-editor-actions .quicker-api__save-button {
+    color: var(--quicker-api-success);
+    border-color: color-mix(in srgb, var(--quicker-api-success) 78%, var(--SmartThemeBorderColor));
+    background: color-mix(in srgb, var(--quicker-api-success) 10%, transparent);
+}
+
+.quicker-api__quick-columns {
+    display: grid;
+    min-width: 0;
+    min-height: 0;
+    flex: 1 1 auto;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    grid-template-rows: minmax(0, 1fr);
+    gap: 0.75rem;
+    overflow: hidden;
+}
+
+.quicker-api__quick-list,
+.quicker-api__quick-editor {
+    min-width: 0;
+    min-height: 0;
+    max-width: 100%;
+    height: 100%;
+    padding: 0.6rem;
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--SmartThemeBlurTintColor) 88%, transparent);
+}
+
+.quicker-api__quick-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    overflow: hidden;
+}
+
+.quicker-api__quick-list-toolbar {
+    display: flex;
+    flex: 0 0 auto;
+}
+
+.quicker-api__quick-list-toolbar .menu_button {
+    display: inline-flex;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    margin: 0;
+}
+
+.quicker-api__quick-list-items {
+    display: flex;
+    min-height: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 0.35rem;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+/* Compact (desktop only): 4 columns with tighter rows. */
+.quicker-api__model-dropdown[data-layout="compact"] .quicker-api__model-options {
+    gap: 0.2rem;
+}
+
+.quicker-api__model-dropdown[data-layout="compact"] .quicker-api__model-option {
+    padding-block: 0.12rem;
+    font-size: 0.72em;
+}
+
+.quicker-api__quick-item {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr) repeat(4, 2.2rem);
+    gap: 0.25rem;
+    padding: 0.3rem;
+    border: 1px solid transparent;
+    border-radius: 7px;
+    cursor: pointer;
+}
+
+.quicker-api__quick-item:hover,
+.quicker-api__quick-item:focus-visible,
+.quicker-api__quick-item.is-selected {
+    border-color: var(--SmartThemeQuoteColor);
+    background: color-mix(in srgb, var(--SmartThemeQuoteColor) 12%, transparent);
+    outline: none;
+}
+
+.quicker-api__quick-item > .menu_button {
+    min-width: 2.2rem;
+    padding-inline: 0;
+    box-shadow: none !important;
+    filter: none !important;
+    transition: none !important;
+}
+
+.quicker-api__quick-select {
+    min-width: 0;
+    align-self: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.quicker-api__quick-editor {
+    display: flex;
+    overflow: hidden;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.quicker-api__quick-editor-title {
+    flex: 0 0 auto;
+    margin: 0;
+    padding-bottom: 0.45rem;
+    border-bottom: 1px solid var(--SmartThemeBorderColor);
+}
+
+.quicker-api__quick-editor-fields {
+    display: flex;
+    min-width: 0;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.quicker-api__quick-editor-actions {
+    flex: 0 0 auto;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    margin-top: auto;
+    padding-top: 0.65rem;
+    border-top: 1px solid var(--SmartThemeBorderColor);
+}
+
+
+.quicker-api__quick-field {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+    gap: 0.25rem;
+}
+
+.quicker-api__quick-field > span {
+    font-weight: 600;
+}
+
+.quicker-api__quick-field > .text_pole,
+.quicker-api__quick-model-control {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.quicker-api__quick-model-control {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.4rem;
+    align-items: center;
+}
+
+.quicker-api__quick-model-control > .quicker-api__model-picker {
+    min-width: 0;
+}
+
+.quicker-api__quick-model-control > .menu_button {
+    margin: 0;
+    white-space: nowrap;
+}
+
+.quicker-api__quick-field-head {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.quicker-api__quick-field-head > span {
+    font-weight: 600;
+}
+
+dialog.popup:has(.quicker-api__placement-popup) {
+    width: min(22rem, calc(100dvw - 2rem));
+    min-height: 0;
+    padding: 6px 8px;
+}
+
+dialog.popup:has(.quicker-api__placement-popup) .popup-content {
+    margin-top: 0;
+    padding: 0;
+}
+
+dialog.popup:has(.quicker-api__placement-popup) .popup-button-close,
+dialog.popup:has(.quicker-api__placement-popup) .popup-controls {
+    display: none !important;
+}
+
+.quicker-api__placement-popup {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: left;
+}
+
+.quicker-api__placement-header,
+.quicker-api__placement-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.quicker-api__placement-header {
+    justify-content: space-between;
+    padding-bottom: 0.45rem;
+    border-bottom: 1px solid var(--SmartThemeBorderColor);
+}
+
+.quicker-api__placement-actions .menu_button {
+    width: 2.2rem;
+    min-width: 2.2rem;
+    height: 2.2rem;
+    margin: 0;
+    padding: 0;
+}
+
+.quicker-api__placement-choices {
+    display: grid;
+    gap: 0.35rem;
+}
+
+.quicker-api__placement-choices .menu_button {
+    width: 100%;
+    min-height: 2.2rem;
+    margin: 0;
+    justify-content: flex-start;
+}
+
+.quicker-api__placement-choices .menu_button.is-selected {
+    border-color: var(--SmartThemeQuoteColor);
+    background: color-mix(in srgb, var(--SmartThemeQuoteColor) 14%, transparent);
+}
+
+@media (max-width: 560px) {
+    .quicker-api {
+        padding: 0.55rem;
+    }
+
+    .quicker-api__field {
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 0.2rem;
+    }
+
+    .quicker-api__desktop-label {
+        display: none !important;
+    }
+
+    .quicker-api__mobile-label {
+        display: inline-flex !important;
+    }
+
+    .quicker-api__url-row {
+        flex-wrap: nowrap;
+    }
+
+    .quicker-api__url-row > #quicker_api_quick_url {
+        flex: 0 0 auto;
+    }
+
+    .quicker-api__key-field {
+        grid-template-columns: auto minmax(0, 1fr);
+        align-items: center;
+    }
+
+    .quicker-api__key-row {
+        display: contents;
+    }
+
+    #quicker_api_key_input {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        background-color: var(--black30a);
+        color: var(--SmartThemeBodyColor);
+        border: 1px solid var(--SmartThemeBorderColor);
+        border-radius: 5px;
+        outline: none;
+        box-shadow: none;
+        font-family: var(--mainFontFamily);
+        font-size: max(16px, var(--mainFontSize));
+        padding: 3px 5px;
+        margin: 5px 0;
+        height: fit-content;
+    }
+
+    #quicker_api_key_input:focus {
+        background-color: var(--black30a);
+        color: var(--SmartThemeBodyColor);
+        border-color: var(--SmartThemeBorderColor);
+        box-shadow: none;
+    }
+
+    #quicker_api_key_input:focus-visible {
+        outline: 1px solid var(--interactable-outline-color-faint);
+    }
+
+    .quicker-api__key-actions {
+        grid-column: 2;
+        grid-row: 1;
+        justify-self: start;
+        gap: 0.25rem;
+    }
+
+    .quicker-api__key-actions .menu_button {
+        width: auto;
+        min-width: 2.1rem;
+        min-height: 2.1rem;
+        padding: 0 0.45rem;
+    }
+
+    #quicker_api_profile_select,
+    #quicker_api_model_control > .text_pole,
+    #quicker_api_model_control > .quicker-api__model-picker {
+        flex: 1 1 100%;
+        max-width: 100%;
+    }
+
+    /* 操作行的图标按钮均分右侧列宽，始终排成一行。 */
+    .quicker-api__profile-actions-row {
+        flex-wrap: nowrap;
+    }
+
+    .quicker-api__profile-actions-row > .menu_button {
+        flex: 1 1 0;
+        width: auto;
+        min-width: 1.7rem;
+        min-height: 2rem;
+        padding-inline: 0;
+        justify-content: center;
+    }
+
+    #quicker_api_import_native,
+    #quicker_api_quick_url {
+        width: 2.2rem;
+        min-width: 2.2rem;
+        min-height: 2.2rem;
+        padding-inline: 0;
+    }
+
+    /* 配置行：标签与下拉并列，按钮在右侧列内换行。 */
+    .quicker-api__profile-field {
+        grid-template-columns: auto minmax(0, 1fr);
+        align-items: center;
+    }
+
+    #quicker_api_model_control {
+        gap: 0.3rem;
+    }
+
+    .quicker-api__parameters-field {
+        grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    .quicker-api__parameters-field .quicker-api__row {
+        flex-wrap: nowrap;
+    }
+
+    .quicker-api__quick-url-select {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0.15rem;
+    }
+}
+
+@media (max-width: 760px) {
+    dialog.popup:has(.quicker-api__quick-manager) {
+        width: min(96dvw, 42rem);
+    }
+
+    .quicker-api__quick-manager {
+        overflow-x: hidden;
+    }
+
+    .quicker-api__quick-header-actions {
+        width: 100%;
+    }
+
+    .quicker-api__quick-header-actions > :first-child {
+        margin-right: auto;
+    }
+
+    .quicker-api__quick-columns {
+        display: flex;
+        flex-direction: column;
+        overflow-x: hidden;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+
+    .quicker-api__quick-list {
+        height: clamp(7rem, 24dvh, 16rem);
+        flex: 0 0 auto;
+    }
+
+    .quicker-api__quick-editor {
+        height: auto;
+        flex: 0 0 auto;
+        overflow: visible;
+    }
+
+    .quicker-api__quick-editor-fields {
+        flex: 0 0 auto;
+        overflow: visible;
+    }
+
+    .quicker-api__quick-editor-actions {
+        position: sticky;
+        bottom: 0;
+        padding-bottom: 0.25rem;
+        background: var(--SmartThemeBlurTintColor);
+    }
+
+    .quicker-api__quick-field {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0.25rem;
+    }
+}
+
+
+/* Keep action labels horizontal; wrap whole buttons rather than characters. */
+.quicker-api .menu_button,
+.quicker-api__model-manager .menu_button {
+    white-space: nowrap;
+    word-break: normal;
+    overflow-wrap: normal;
+    flex-shrink: 0;
+}
+
+#quicker_api_model_control > .quicker-api__model-picker {
+    min-width: 0;
+    flex: 1 1 12rem;
+}
+
+@media (max-width: 760px) {
+    /* 模型行：标签后紧跟三个小按钮，选择器独占下一行。 */
+    .quicker-api__model-field {
+        grid-template-columns: auto auto auto auto minmax(0, 1fr);
+        gap: 0.3rem;
+    }
+
+    .quicker-api__model-field > label {
+        grid-column: 1;
+        grid-row: 1;
+        align-self: center;
+    }
+
+    .quicker-api__model-caption {
+        display: block;
+        grid-column: 1;
+        grid-row: 2;
+        align-self: center;
+    }
+
+    .quicker-api__model-field .quicker-api__desktop-label {
+        display: none !important;
+    }
+
+    .quicker-api__model-field .quicker-api__mobile-label {
+        display: inline !important;
+    }
+
+    #quicker_api_model_control {
+        display: contents;
+    }
+
+    #quicker_api_model_control > .quicker-api__model-picker {
+        grid-column: 2 / -1;
+        grid-row: 2;
+        width: 100%;
+    }
+
+    #quicker_api_fetch_models {
+        grid-column: 2;
+        grid-row: 1;
+        padding-inline: 0.4rem;
+    }
+
+    #quicker_api_add_model {
+        grid-column: 3;
+        grid-row: 1;
+        width: auto;
+        min-width: auto;
+        padding-inline: 0.4rem;
+    }
+
+    #quicker_api_channels {
+        grid-column: 4;
+        grid-row: 1;
+        padding-inline: 0.4rem;
+    }
+}
+
+/* Searchable model picker: favorites / full list, with inline favorite stars. */
+.quicker-api__model-value {
+    display: none !important;
+}
+
+.quicker-api__model-picker,
+.quicker-api__model-dropdown {
+    --quicker-api-star: var(--golden, #f8d300);
+    --quicker-api-stale: color-mix(in srgb, #ffae35 82%, var(--SmartThemeBodyColor));
+}
+
+.quicker-api__model-picker {
+    position: relative;
+    min-width: 0;
+    flex: 1 1 12rem;
+}
+
+.quicker-api__model-picker button,
+.quicker-api__model-dropdown button {
+    white-space: nowrap;
+}
+
+.quicker-api__model-trigger {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+    align-items: center;
+    gap: 0.45rem;
+    cursor: pointer;
+    text-align: left;
+    color: inherit;
+    font: inherit;
+}
+
+.quicker-api__model-trigger-label {
+    min-width: 0;
+    flex: 1 1 auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.quicker-api__model-trigger.is-empty .quicker-api__model-trigger-label {
+    opacity: 0.6;
+}
+
+.quicker-api__model-trigger-mark {
+    flex: 0 0 auto;
+    font-size: 0.85em;
+    opacity: 0.72;
+}
+
+.quicker-api__model-trigger-mark.is-favorite {
+    color: var(--quicker-api-star);
+    opacity: 1;
+}
+
+.quicker-api__model-trigger-mark.is-stale {
+    color: var(--quicker-api-stale);
+    opacity: 1;
+}
+
+.quicker-api__model-trigger-caret {
+    flex: 0 0 auto;
+    font-size: 0.75em;
+    opacity: 0.65;
+    transition: transform 0.15s ease;
+}
+
+.quicker-api__model-picker.is-open .quicker-api__model-trigger-caret {
+    transform: rotate(180deg);
+}
+
+/* Portaled to <body> while open and positioned from JS next to the trigger. */
+.quicker-api__model-portal {
+    display: contents !important;
+}
+
+.quicker-api__model-dropdown {
+    position: fixed;
+    z-index: 10020;
+    box-sizing: border-box;
+    display: flex;
+    max-height: min(70dvh, 30rem);
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 0.45rem;
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 8px;
+    background: var(--SmartThemeBlurTintColor);
+    box-shadow: 0 8px 24px rgb(0 0 0 / 0.35);
+    backdrop-filter: blur(var(--SmartThemeBlurStrength, 8px));
+    color: var(--SmartThemeBodyColor);
+}
+
+.quicker-api__model-dropdown[hidden] {
+    display: none;
+}
+
+.quicker-api__model-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.3rem;
+}
+
+.quicker-api__model-tabs > button {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    padding: 0.32rem 0.5rem;
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 6px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+    opacity: 0.7;
+}
+
+.quicker-api__model-tabs > button small {
+    opacity: 0.7;
+}
+
+.quicker-api__model-tabs > button.is-active {
+    border-color: color-mix(in srgb, var(--SmartThemeQuoteColor) 75%, var(--SmartThemeBorderColor));
+    background: color-mix(in srgb, var(--SmartThemeQuoteColor) 18%, transparent);
+    opacity: 1;
+}
+
+.quicker-api__model-tabs > button[data-model-view="favorites"] > i {
+    color: var(--quicker-api-star);
+}
+
+.quicker-api__model-search-row {
+    display: flex;
+    align-items: stretch;
+    gap: 0.3rem;
+}
+
+.quicker-api__model-search-row > .quicker-api__model-search-input {
+    min-width: 0;
+    flex: 1 1 auto;
+    margin: 0;
+}
+
+.quicker-api__model-icon-button {
+    display: inline-flex;
+    width: 2.2rem;
+    min-width: 2.2rem;
+    flex: 0 0 auto;
+    margin: 0;
+    padding: 0;
+    align-items: center;
+    justify-content: center;
+}
+
+.quicker-api__model-options {
+    display: grid;
+    min-height: 0;
+    flex: 1 1 auto;
+    grid-template-columns: repeat(var(--quicker-api-model-columns, 1), minmax(0, 1fr));
+    grid-auto-rows: min-content;
+    align-content: start;
+    gap: 0.25rem;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.quicker-api__model-option {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.22rem 0.35rem 0.22rem 0.2rem;
+    border: 1px solid color-mix(in srgb, var(--SmartThemeBorderColor) 55%, transparent);
+    border-left-width: 3px;
+    border-radius: 6px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.quicker-api__model-option:hover,
+.quicker-api__model-option.is-active {
+    background: color-mix(in srgb, var(--SmartThemeQuoteColor) 14%, transparent);
+}
+
+.quicker-api__model-option.is-active {
+    border-color: color-mix(in srgb, var(--SmartThemeQuoteColor) 55%, transparent);
+}
+
+/* Favorites stand out inside the full list with a gold accent bar. */
+.quicker-api__model-option.is-favorite {
+    border-left-color: var(--quicker-api-star);
+}
+
+.quicker-api__model-option.is-selected .quicker-api__model-option-name {
+    font-weight: 600;
+}
+
+.quicker-api__model-option.is-stale .quicker-api__model-option-name {
+    opacity: 0.75;
+    text-decoration: underline dotted var(--quicker-api-stale);
+}
+
+.quicker-api__model-option-name {
+    min-width: 0;
+    /* 模型名可能很长：折行完整显示，不用省略号截断。 */
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    line-height: 1.2;
+}
+
+/* Provider sections of the favorites view; a row in another section applies that provider. */
+.quicker-api__model-group {
+    display: flex;
+    grid-column: 1 / -1;
+    min-width: 0;
+    align-items: baseline;
+    gap: 0.4rem;
+    padding: 0.35rem 0.2rem 0.1rem;
+    font-weight: 600;
+    opacity: 0.85;
+}
+
+.quicker-api__model-group:first-child {
+    padding-top: 0;
+}
+
+.quicker-api__model-group-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.quicker-api__model-group small {
+    flex: none;
+    font-weight: normal;
+    opacity: 0.7;
+}
+
+.quicker-api__model-option-badges {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    white-space: nowrap;
+}
+
+.quicker-api__model-option-badges small {
+    opacity: 0.7;
+}
+
+.quicker-api__model-option-badges .fa-triangle-exclamation {
+    color: var(--quicker-api-stale);
+}
+
+.quicker-api__model-option-badges .fa-check {
+    color: var(--quicker-api-success, #35d06f);
+}
+
+.quicker-api__model-star {
+    display: inline-flex;
+    width: 1.45rem;
+    height: 1.45rem;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    opacity: 0.55;
+}
+
+.quicker-api__model-star:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--quicker-api-star) 18%, transparent);
+    opacity: 1;
+}
+
+.quicker-api__model-star[aria-pressed="true"] {
+    color: var(--quicker-api-star);
+    opacity: 1;
+}
+
+.quicker-api__model-star:disabled {
+    cursor: default;
+    opacity: 0.25;
+}
+
+.quicker-api__model-add {
+    grid-column: 1 / -1;
+    grid-template-columns: auto minmax(0, 1fr);
+    border-style: dashed;
+    border-color: color-mix(in srgb, var(--SmartThemeBorderColor) 80%, transparent);
+}
+
+.quicker-api__model-add > i {
+    width: 1.6rem;
+    text-align: center;
+}
+
+.quicker-api__model-options > .quicker-api__empty-state {
+    grid-column: 1 / -1;
+    padding: 0.8rem 0.4rem;
+    opacity: 0.7;
+    text-align: center;
+}
+
+/* Model manager: stale favorites. */
+.quicker-api__stale-badge {
+    margin-left: 0.5rem;
+    padding: 0.05rem 0.45rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, #ffae35 22%, transparent);
+    color: color-mix(in srgb, #ffae35 82%, var(--SmartThemeBodyColor));
+    font-size: 0.8em;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.quicker-api__stale-badge[hidden] {
+    display: none;
+}
+
+.quicker-api__chosen-model.is-stale {
+    border-color: color-mix(in srgb, #ffae35 70%, var(--SmartThemeBorderColor));
+    background: color-mix(in srgb, #ffae35 10%, var(--SmartThemeBlurTintColor));
+}
+
+.quicker-api__chosen-model.is-stale > small {
+    color: color-mix(in srgb, #ffae35 82%, var(--SmartThemeBodyColor));
+    opacity: 1;
+}
+
+/* v3.10 便捷菜单：当前正在使用的方案 */
+.quicker-api__quick-menu > .list-group-item.is-active {
+    border-left: 3px solid var(--SmartThemeQuoteColor);
+    background: color-mix(in srgb, var(--SmartThemeQuoteColor) 18%, transparent);
+    font-weight: 700;
+    opacity: 1;
+}
+
+.quicker-api__quick-menu > .list-group-item.is-active .qr--button-icon {
+    color: var(--SmartThemeQuoteColor);
+}
+
+.quicker-api__quick-menu .quicker-api__quick-menu-params {
+    flex: 0 0 auto;
+    margin-left: auto;
+    opacity: 0.6;
+    font-size: 0.85em;
+}
+
+/* v4.2 聊天入口：模型快速选择 */
+.quicker-api__model-quick-menu {
+    min-width: 16rem;
+}
+
+.quicker-api__model-quick-current {
+    margin-left: 0.5rem;
+    opacity: 0.7;
+    font-weight: 400;
+}
+
+.quicker-api__model-quick-search {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding: 5px !important;
+    background: var(--SmartThemeBlurTintColor);
+}
+
+.quicker-api__model-quick-search-input {
+    width: 100%;
+}
+
+.quicker-api__model-quick-group {
+    padding-top: 8px !important;
+    padding-bottom: 2px !important;
+    font-weight: 700;
+    opacity: 0.85;
+}
+
+.quicker-api__model-quick-item .qr--button-label {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+    line-height: 1.15;
+    white-space: normal;
+}
+
+.quicker-api__model-quick-name {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.quicker-api__model-quick-owner {
+    opacity: 0.65;
+    font-weight: 400;
+    font-size: 0.85em;
+}
+
+.quicker-api__model-quick-add .qr--button-label {
+    font-style: italic;
+}
+
+.quicker-api__model-quick-channel .qr--button-label {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+    line-height: 1.15;
+    white-space: normal;
+    min-width: 0;
+}
+
+.quicker-api__model-quick-channel .quicker-api__quick-menu-params {
+    margin-left: auto;
+    opacity: 0.65;
+}
+
+.quicker-api__model-quick-back .qr--button-label {
+    font-weight: 600;
+}
+
+/* v3.10 便捷方案：预设参数 */
+.quicker-api__quick-params {
+    min-width: 0;
+    margin: 0;
+    padding: 0.35rem 0.55rem 0.5rem;
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 6px;
+}
+
+.quicker-api__quick-params.is-enabled {
+    border-color: color-mix(in srgb, var(--SmartThemeQuoteColor) 70%, var(--SmartThemeBorderColor));
+}
+
+.quicker-api__quick-params > legend {
+    padding: 0 0.3rem;
+}
+
+.quicker-api__quick-params-toggle {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: 600;
+}
+
+.quicker-api__quick-params-toggle small {
+    font-weight: 400;
+    opacity: 0.7;
+}
+
+.quicker-api__quick-params-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.quicker-api__quick-params-rows[hidden] {
+    display: none;
+}
+
+.quicker-api__quick-param {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: 7rem minmax(4rem, 1fr) 5rem minmax(6rem, auto);
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.quicker-api__quick-param > .checkbox_label {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 0.35rem;
+    white-space: nowrap;
+}
+
+.quicker-api__quick-param > input[type="range"] {
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+}
+
+.quicker-api__quick-param > .text_pole {
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+}
+
+.quicker-api__quick-param-hint,
+.quicker-api__quick-params-help {
+    opacity: 0.7;
+    white-space: nowrap;
+}
+
+.quicker-api__quick-params-help {
+    white-space: normal;
+}
+
+.quicker-api__quick-param.is-off > :not(.checkbox_label) {
+    opacity: 0.45;
+}
+
+@media (max-width: 760px) {
+    .quicker-api__quick-param {
+        grid-template-columns: minmax(0, 1fr) 5rem;
+    }
+
+    .quicker-api__quick-param > input[type="range"] {
+        grid-column: 1 / -1;
+        grid-row: 2;
+    }
+
+    .quicker-api__quick-param-hint {
+        grid-column: 1 / -1;
+    }
+}
+
+/* v3.10 下拉列表：清理失效收藏 */
+.quicker-api__model-prune.has-stale {
+    border-color: color-mix(in srgb, orange 70%, var(--SmartThemeBorderColor));
+    color: orange;
+}
+
+.quicker-api__model-prune:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+/* v3.10.1 引用失效的便捷方案 */
+.quicker-api__quick-item.is-broken .quicker-api__quick-select,
+.quicker-api__quick-menu > .list-group-item.is-broken {
+    color: orange;
+}
+
+.quicker-api__quick-broken {
+    margin-right: 0.35rem;
+}
+
+/* v3.10.1 手机端：宿主 Quick Reply 在 max-width:1000px 时给
+   .list-group .list-group-item.ctx-item 加了 padding:1em，会撑大便捷菜单的行距。
+   这里用更高优先级恢复与 PC 一致的紧凑间距。 */
+.list-group.quicker-api__quick-menu > .list-group-item.ctx-item {
+    padding: 5px;
+}
+
+/* Format tag on models spoken in a format other than their provider's. */
+.quicker-api__model-format-tag {
+    padding: 0 0.4rem;
+    border: 1px solid color-mix(in srgb, var(--SmartThemeQuoteColor) 55%, transparent);
+    border-radius: 999px;
+    color: var(--SmartThemeQuoteColor);
+    font-size: 0.72em;
+    line-height: 1.5;
+    opacity: 1 !important;
+}
+
+/* "格式" view rows: model with its provider underneath. */
+.quicker-api__model-option--provider .quicker-api__model-option-name {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.quicker-api__model-option--provider .quicker-api__model-option-name > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.quicker-api__model-option-provider {
+    overflow: hidden;
+    font-size: 0.75em;
+    opacity: 0.6;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.quicker-api__model-group.is-current .quicker-api__model-group-name {
+    color: var(--SmartThemeQuoteColor);
+}
+
+/* ---------------------------------------------------------------------------
+   Channel manager: channel list + detail (connection card, model catalog).
+   --------------------------------------------------------------------------- */
+.quicker-api__channels {
+    --quicker-api-channel-radius: 12px;
+    display: grid;
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 0;
+    flex: 1 1 auto;
+    grid-template-columns: minmax(13rem, 16rem) minmax(0, 1fr);
+    gap: 0.9rem;
+    color: var(--SmartThemeBodyColor);
+    text-align: left;
+}
+
+.quicker-api__channels * {
+    box-sizing: border-box;
+}
+
+.quicker-api__channels .menu_button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    margin: 0;
+    min-height: 2.1rem;
+    line-height: 1.15;
+    white-space: nowrap;
+}
+
+.quicker-api__channels-sidebar {
+    display: flex;
+    min-height: 0;
+    flex-direction: column;
+    gap: 0.6rem;
+    padding: 0.7rem;
+    border: 1px solid color-mix(in srgb, var(--SmartThemeBorderColor) 80%, transparent);
+    border-radius: var(--quicker-api-channel-radius);
+    background: color-mix(in srgb, var(--SmartThemeBlurTintColor) 70%, transparent);
+}
+
+.quicker-api__channels-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.quicker-api__channels-head h3,
+.quicker-api__channel-heading h3 {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 0.45rem;
+    margin: 0;
+    font-size: 1.05em;
+}
+
+.quicker-api__channel-new {
+    border-color: color-mix(in srgb, var(--quicker-api-success) 60%, var(--SmartThemeBorderColor));
+    color: var(--quicker-api-success);
+}
+
+.quicker-api__channels-list {
+    display: flex;
+    min-height: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 0.35rem;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.quicker-api__channel-item {
+    display: grid;
+    width: 100%;
+    align-items: center;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 0.6rem;
+    padding: 0.5rem 0.55rem;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.quicker-api__channel-item:hover {
+    background: color-mix(in srgb, var(--SmartThemeBodyColor) 7%, transparent);
+}
+
+.quicker-api__channel-item:focus-visible {
+    outline: 2px solid var(--SmartThemeQuoteColor);
+    outline-offset: 1px;
+}
+
+.quicker-api__channel-item.is-active {
+    border-color: color-mix(in srgb, var(--SmartThemeQuoteColor) 60%, var(--SmartThemeBorderColor));
+    background: color-mix(in srgb, var(--SmartThemeQuoteColor) 16%, var(--SmartThemeBlurTintColor));
+}
+
+.quicker-api__channel-avatar {
+    display: inline-grid;
+    width: 2rem;
+    height: 2rem;
+    place-items: center;
+    border-radius: 9px;
+    background: color-mix(in srgb, var(--SmartThemeQuoteColor) 28%, transparent);
+    font-weight: 700;
+}
+
+.quicker-api__channel-text {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+.quicker-api__channel-name,
+.quicker-api__channel-format {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.quicker-api__channel-name {
+    font-weight: 600;
+}
+
+.quicker-api__channel-format {
+    font-size: 0.78em;
+    opacity: 0.65;
+}
+
+.quicker-api__channel-flags {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.quicker-api__channel-live,
+.quicker-api__channel-dirty {
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 50%;
+}
+
+.quicker-api__channel-live {
+    background: var(--quicker-api-success);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--quicker-api-success) 25%, transparent);
+}
+
+.quicker-api__channel-dirty {
+    background: #ffae35;
+}
+
+.quicker-api__channel-detail {
+    display: flex;
+    min-width: 0;
+    min-height: 0;
+    flex-direction: column;
+    gap: 0.75rem;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: 0.15rem;
+}
+
+.quicker-api__channel-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.quicker-api__channel-back {
+    display: none !important;
+}
+
+/* Title with the live badge right after it; a long title is truncated, the badge stays. */
+.quicker-api__channel-heading {
+    display: flex;
+    min-width: 0;
+    flex: 1 1 auto;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.quicker-api__channel-heading > .quicker-api__channel-title {
+    display: block;
+    min-width: 0;
+    flex: 0 1 auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.quicker-api__channel-heading > .quicker-api__channel-badge {
+    flex: 0 0 auto;
+}
+
+.quicker-api__channel-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.quicker-api__channel-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.1rem 0.55rem;
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 999px;
+    font-size: 0.8em;
+    white-space: nowrap;
+}
+
+.quicker-api__channel-badge.is-live {
+    border-color: #6fdc8c99;
+    background: #6fdc8c26;
+    color: #8ee8a6;
+}
+
+.quicker-api__channel-badge.is-live i {
+    font-size: 0.55em;
+}
+
+.quicker-api__channel-delete {
+    border-color: color-mix(in srgb, var(--quicker-api-danger) 65%, var(--SmartThemeBorderColor)) !important;
+    color: var(--quicker-api-danger);
+}
+
+.quicker-api__channel-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    padding: 0.8rem 0.9rem;
+    border: 1px solid color-mix(in srgb, var(--SmartThemeBorderColor) 80%, transparent);
+    border-radius: var(--quicker-api-channel-radius);
+    background: color-mix(in srgb, var(--SmartThemeBlurTintColor) 70%, transparent);
+}
+
+.quicker-api__channel-card > h4 {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin: 0;
+    font-size: 0.95em;
+    opacity: 0.9;
+}
+
+.quicker-api__channel-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.6rem 0.8rem;
+}
+
+.quicker-api__channel-field {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin: 0;
+    font-weight: normal;
+}
+
+.quicker-api__channel-field.is-wide {
+    grid-column: 1 / -1;
+}
+
+.quicker-api__channel-field[hidden] {
+    display: none;
+}
+
+.quicker-api__channel-field > span {
+    font-size: 0.82em;
+    opacity: 0.7;
+}
+
+.quicker-api__channel-field .text_pole {
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+}
+
+.quicker-api__channel-key {
+    display: flex;
+    gap: 0.35rem;
+}
+
+.quicker-api__channel-key > .text_pole {
+    flex: 1 1 auto;
+}
+
+.quicker-api__channel-hint {
+    opacity: 0.7;
+    overflow-wrap: anywhere;
+}
+
+.quicker-api__key-pool {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.quicker-api__key-pool-row {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.92em;
+}
+
+.quicker-api__key-pool-row input[type="checkbox"] {
+    margin: 0;
+}
+
+.quicker-api__key-pool textarea.text_pole {
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+    resize: vertical;
+}
+
+.quicker-api__key-pool-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.quicker-api__key-pool-hint {
+    opacity: 0.7;
+    overflow-wrap: anywhere;
+}
+
+.quicker-api__key-pool.is-disabled textarea.text_pole {
+    opacity: 0.5;
+}
+
+.quicker-api__channel-empty {
+    display: flex;
+    min-height: 16rem;
+    flex: 1 1 auto;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    border: 1px dashed var(--SmartThemeBorderColor);
+    border-radius: var(--quicker-api-channel-radius);
+    opacity: 0.8;
+}
+
+.quicker-api__channel-empty > i {
+    font-size: 2rem;
+    opacity: 0.5;
+}
+
+/* The catalog inside a channel: always one page (favorites / remote) at a time. */
+.quicker-api__channels .quicker-api__model-manager--paged {
+    width: 100%;
+    height: auto;
+    gap: 0.55rem;
+}
+
+.quicker-api__channels .quicker-api__manager-pages {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.35rem;
+}
+
+.quicker-api__channels .quicker-api__manager-pages > button {
+    width: 100%;
+    min-width: 0;
+    opacity: 0.75;
+}
+
+.quicker-api__channels .quicker-api__manager-pages > button.is-active {
+    border-color: color-mix(in srgb, var(--SmartThemeQuoteColor) 75%, var(--SmartThemeBorderColor));
+    background: color-mix(in srgb, var(--SmartThemeQuoteColor) 22%, var(--SmartThemeBlurTintColor));
+    opacity: 1;
+}
+
+.quicker-api__channels .quicker-api__manager-pages > button > small {
+    opacity: 0.75;
+}
+
+.quicker-api__channels .quicker-api__manager-pages > button.has-stale > small {
+    color: color-mix(in srgb, #ffae35 82%, var(--SmartThemeBodyColor));
+    opacity: 1;
+}
+
+.quicker-api__channels .quicker-api__manager-columns {
+    display: block;
+    min-height: 0;
+}
+
+.quicker-api__channels .quicker-api__model-manager--paged[data-page="remote"] .quicker-api__manager-panel[data-page="chosen"],
+.quicker-api__channels .quicker-api__model-manager--paged[data-page="chosen"] .quicker-api__manager-panel[data-page="remote"] {
+    display: none;
+}
+
+.quicker-api__channels .quicker-api__manager-panel {
+    padding: 0;
+    border: 0;
+    background: transparent;
+}
+
+.quicker-api__channels .quicker-api__manager-panel > h4 {
+    display: none;
+}
+
+.quicker-api__channels .quicker-api__model-list {
+    min-height: 8rem;
+    max-height: 22rem;
+}
+
+.quicker-api__channels .quicker-api__fetch-hint {
+    color: var(--warning-color, #e6a23c);
+    opacity: 1;
+}
+
+.quicker-api__channels .quicker-api__fetch-hint[hidden] {
+    display: none;
+}
+
+.quicker-api__channels .quicker-api__chosen-model {
+    grid-template-columns: 1.7rem minmax(6rem, 1fr) auto minmax(7rem, 9.5rem) auto;
+}
+
+.quicker-api__model-format-select {
+    min-width: 0;
+    width: 100% !important;
+    max-width: none !important;
+    justify-self: stretch;
+    margin: 0;
+    padding-block: 0.2rem;
+    font-size: 0.85em;
+    text-overflow: ellipsis;
+}
+
+.quicker-api__model-format-select[hidden] {
+    display: none;
+}
+
+.quicker-api__chosen-model.has-format .quicker-api__model-format-select {
+    border-color: color-mix(in srgb, var(--SmartThemeQuoteColor) 70%, var(--SmartThemeBorderColor));
+    color: var(--SmartThemeQuoteColor);
+}
+
+@container (max-width: 30rem) {
+    /* Narrow detail pane: name / format / actions each get a full line so
+       the format select is never squeezed beside the action buttons. */
+    .quicker-api__channels .quicker-api__chosen-model {
+        grid-template-columns: 1.7rem minmax(0, 1fr) auto;
+        row-gap: 0.35rem;
+    }
+
+    .quicker-api__channels .quicker-api__chosen-model > .quicker-api__model-format-select {
+        grid-row: 2;
+        grid-column: 2 / -1;
+    }
+
+    .quicker-api__channels .quicker-api__chosen-model > .quicker-api__item-actions {
+        grid-row: 3;
+        grid-column: 2 / -1;
+        justify-content: flex-end;
+    }
+}
+
+/* The dialog has a fixed size that fits the viewport; only the lists inside scroll. */
+dialog.popup:has(.quicker-api__channels) {
+    width: min(calc(100dvw - 2rem), 96rem) !important;
+    max-width: calc(100dvw - 1rem) !important;
+    height: min(calc(100dvh - 2rem), 56rem) !important;
+    min-height: 0;
+    max-height: calc(100dvh - 1rem);
+    box-sizing: border-box;
+}
+
+dialog.popup:has(.quicker-api__channels) .popup-body {
+    min-height: 0;
+    max-height: none;
+}
+
+dialog.popup:has(.quicker-api__channels) .popup-content {
+    display: flex;
+    min-height: 0;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Wide screens: the model catalog gets its own column beside the connection. */
+@media (min-width: 1100px) {
+    .quicker-api__channel-detail {
+        display: grid;
+        grid-template-columns: minmax(17rem, 0.65fr) minmax(0, 1.35fr);
+        grid-template-rows: auto minmax(0, 1fr);
+        align-items: start;
+        overflow: hidden;
+        padding-right: 0;
+    }
+
+    .quicker-api__channel-header,
+    .quicker-api__channel-empty {
+        grid-column: 1 / -1;
+    }
+
+    .quicker-api__channel-empty {
+        grid-row: 1 / -1;
+        align-self: stretch;
+    }
+
+    .quicker-api__channel-card[data-card="connection"] {
+        max-height: 100%;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+
+    .quicker-api__channel-card[data-card="connection"] .quicker-api__channel-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .quicker-api__channel-card[data-card="models"] {
+        height: 100%;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    .quicker-api__channel-card[data-card="models"] .quicker-api__model-manager--paged {
+        display: flex;
+        min-height: 0;
+        flex: 1 1 auto;
+        flex-direction: column;
+    }
+
+    .quicker-api__channel-card[data-card="models"] .quicker-api__manager-columns {
+        display: flex;
+        min-height: 0;
+        flex: 1 1 auto;
+        flex-direction: column;
+    }
+
+    .quicker-api__channel-card[data-card="models"] .quicker-api__manager-panel:not([hidden]) {
+        display: flex;
+        min-height: 0;
+        flex: 1 1 auto;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .quicker-api__channel-card[data-card="models"] .quicker-api__model-list {
+        min-height: 0;
+        max-height: none;
+        flex: 1 1 auto;
+    }
+}
+
+dialog.popup:has(.quicker-api__channels) .popup-controls .menu_button {
+    min-width: 5rem;
+    filter: none !important;
+    transform: none !important;
+}
+
+@media (max-width: 760px) {
+    .quicker-api__channels {
+        display: block;
+    }
+
+    .quicker-api__channels[data-view="detail"] > .quicker-api__channels-sidebar,
+    .quicker-api__channels[data-view="list"] > .quicker-api__channel-detail {
+        display: none;
+    }
+
+    .quicker-api__channels-sidebar,
+    .quicker-api__channel-detail {
+        height: 100%;
+    }
+
+    .quicker-api__channel-back {
+        display: inline-flex !important;
+        flex: 0 0 auto;
+    }
+
+    .quicker-api__channel-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .quicker-api__channel-delete > span {
+        display: none;
+    }
+
+    .quicker-api__channels .quicker-api__model-list {
+        max-height: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .quicker-api__channels *,
+    .quicker-api__switch,
+    .quicker-api__switch * {
+        transition: none !important;
+    }
+}

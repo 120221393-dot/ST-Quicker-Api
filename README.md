@@ -1,0 +1,403 @@
+# api快捷工具
+
+api快捷工具 是 SillyTavern 原生“API 连接配置”的轻量增强面板，用来更方便地管理 API 配置，同时通过同一份代码适配 TauriTavern。
+
+适合需要在多个 API 地址、密钥和模型之间频繁切换的用户。
+
+api快捷工具 复用了 SillyTavern 原生功能以实现最大兼容。
+
+## 使用前提
+
+api快捷工具 界面直接显示在 SillyTavern 原生的 **API 连接配置** 中，使用前需要先将 SillyTavern 的 **聊天补全来源** 切换至 **自定义（兼容 OpenAI）** / **Claude** / **Google AI Studio**。
+
+## TauriTavern 兼容
+
+- Anthropic/Gemini 仍只由插件管理“排除主体参数”。TauriTavern 原生已有的该来源附加 Body/Headers 会保留，不被插件顺带清空，也不随 Quicker Profile 切换。
+- 暂不新增 TauriTavern 的 OpenAI Responses、Claude Messages、Gemini Interactions 等 Custom 子协议 Profile。它们不会被当作普通 OpenAI Compatible 配置导入。
+
+**升级提醒：** 旧版插件在 TauriTavern 中可能已经漏存附加参数。升级不能凭空恢复未保存的内容；更新前建议备份原生附加参数，更新后重新填写并保存受影响的 Profile。既有 Profile 自动升级配置结构，原 Custom 配置不会自动转换为 OpenCode。
+
+### TT 中连接 OpenCode
+
+1. 在插件 **格式** 中选择 **OpenCode (Zen / Go)**。
+2. URL 填 `zen` / `go`，也可填写 `https://opencode.ai/zen/v1` / `https://opencode.ai/zen/go/v1`。
+3. 选择与模型匹配的 **OpenCode 协议**：OpenAI Chat Completions、OpenAI Responses、Anthropic Messages 或 Gemini。Go 不支持 Gemini，插件会在保存前拒绝该组合。
+4. 填写 Key 并保存，再获取或手动添加模型。旧配置使用的是另一密钥槽，切换为 OpenCode 时请重新填写 Key，或先在 TT 原生 OpenCode 中配置再导入。
+
+仅官方 OpenCode Zen / Go 适用；本地 OpenCode 服务、第三方转换服务应按其实际接口使用 Custom / Anthropic 等格式。
+
+
+## 功能预览
+
+<table>
+  <tr>
+    <td width="50%" align="center" valign="top">
+      <img src="https://github.com/user-attachments/assets/894298f4-c0b7-4ed3-beaf-161a2cfcec22" alt="api快捷工具 配置管理界面" width="100%" />
+      <br />
+      <sub>API 配置管理</sub>
+    </td>
+    <td width="50%" align="center" valign="top">
+      <img src="https://github.com/user-attachments/assets/74c36eab-06ca-48fa-a7ec-24b351b3ea63" alt="api快捷工具 模型列表管理界面" width="100%" />
+      <br />
+      <sub>模型列表管理</sub>
+    </td>
+  </tr>
+</table>
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/25c97261-78d3-4d1f-a8a0-8039228fff98" alt="api快捷工具 模型快速选择菜单" width="303" />
+  <br />
+  <sub>发送栏模型快速选择菜单</sub>
+</p>
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/f82e5f9a-a5be-4066-a752-dbcaa06091c7" alt="api快捷工具 便捷按钮管理界面" width="100%" />
+  <br />
+  <sub>便捷按钮管理</sub>
+</p>
+
+## 主要功能
+
+- **多配置管理** — 保存多个 API 配置，快速新增、切换、重命名、复制和删除
+- **多种格式** — OpenAI Compatible、Anthropic、Gemini；支持原生 OpenCode 的宿主额外提供 OpenCode (Zen / Go)
+- **统一保存** — 一次保存 API 格式、URL、Key、模型和配置名称；所有支持格式均可按 Profile 保存排除主体参数
+- **快捷 URL** — 一键填入 SillyTavern 常用服务端点，也可添加和删除自己的 URL 简称
+- **原生密钥管理** — 密钥继续保存在 SillyTavern 的原生 Secrets 中，不写进插件配置
+- **渠道管理** — 在一个页面里设置供应商（URL、协议、Key），整理收藏模型，并可为单个模型指定格式
+- **迁移原生配置** — 批量导入 SillyTavern 当前的 OpenAI 配置
+- **预设联动（可选，默认关闭）** — 开启后可以让不同的对话补全预设自动使用对应的 API 配置和模型
+- **面板折叠** — 收起后只显示“格式 · 配置名 · 模型名称”，展开/收起状态仅由当前浏览器记忆
+- **模型快速选择** — 发送栏的闪电入口一键弹出模型列表，点选即切换当前模型；跨渠道的收藏模型会连渠道一起切换
+- **便捷方案（可选）** — 入口菜单里的「管理」仍可组合切换“对话补全预设 + API 配置 + 模型”，并覆盖预设采样参数
+- **保存附加参数** — 配置与附加参数一起保存
+- **配置备份与恢复** — 一键把配置、密钥与搭配方案导出为 JSON 备份文件，也可从备份文件导入恢复
+
+> 简单来说，目前支持以下功能：
+- 在自定义兼容格式下实现方便地切换api配置
+- 自定义调整模型的下拉列表展示项！（再也不用在一堆模型里翻自己需要的那几个模型了 ）
+- 发送栏闪电按钮直接做模型快速选择，点选即切；如需按方案（api + 预设 + 模型）组合切换，仍可在「管理」中配置
+- 附加参数可以跟随配置一起切换
+
+## 支持的 API 格式
+
+| API Format | 对应 SillyTavern 来源 | 说明 |
+|---|---|---|
+| OpenAI Compatible | Custom（兼容 OpenAI） | 支持自定义 URL、Key、模型和附加参数，并保留原生 Custom 推理内容解析 |
+| Anthropic | Claude | 可使用官方 API或 其它支持 Claude 格式的端点，并支持按 Profile 排除请求顶层参数 |
+| OpenCode (Zen / Go) | OpenCode（需宿主支持） | 使用原生渠道、协议和密钥槽，支持模型列表及附加参数 |
+| Gemini | Google AI Studio | 可使用官方 API或 其它支持 Gemini 格式的端点，并支持按 Profile 排除请求顶层参数 |
+
+## 安装
+
+### 自动安装
+
+打开 SillyTavern：
+
+```text
+扩展 → 安装扩展
+```
+
+输入以下 GitHub 地址：
+
+```text
+https://github.com/120221393-dot/ST-Quicker-Api
+```
+
+### 手动安装
+
+将整个 `ST-Quicker-Api` 文件夹放到：
+
+```text
+SillyTavern/public/scripts/extensions/third-party/
+```
+
+然后刷新 SillyTavern 页面。
+
+## 基本使用
+
+### 1. 新建 API 配置
+
+1. 打开 SillyTavern 的 **API 连接配置**
+2. 将聊天补全来源切换为 **自定义（兼容 OpenAI）** 、Claude 或 Google AI Studio
+3. 点击 api快捷工具 中的 **新增配置** 按钮，先输入配置名称
+4. 新配置会立即出现在下拉列表中（显示“未保存”），URL、Key、模型和收藏均为空，不会继承上一个配置的任何内容，也不会改动当前正在使用的连接
+5. 选择 API Format，填写 URL、Key 和模型；URL 也可通过右侧的 **快捷 URL** 按钮填入
+6. 点击 api快捷工具 面板中的“附加参数”：OpenAI Compatible 可编辑原生全部三栏；Anthropic/Gemini 只显示并支持“排除主体参数”
+7. 点击 **保存 API 配置**，配置即被启用；只有保存时选中的模型会加入收藏
+
+保存后，这个配置会出现在“当前配置”下拉列表中。OpenAI Compatible 会保存全部三项原生附加参数；Anthropic/Gemini 会保存“排除主体参数”。
+
+### 2. 使用快捷 URL
+
+1. 点击 URL 输入框右侧的 **快捷 URL**
+2. 选择 OpenAI、OpenRouter、DeepSeek 等 SillyTavern 常用服务，URL 会立即填入输入框
+3. 点击菜单底部的 **添加快捷 URL**，可保存自己的“简称 + URL”
+4. 自定义项目右侧的删除按钮只会删除该快捷项，不会删除任何 API Profile
+
+快捷 URL 只负责填入地址；仍需点击 **保存 API 配置** 才会把新地址写入当前 Profile。
+
+### 3. 切换配置
+
+直接在“当前配置”下拉列表中选择需要的配置。
+
+插件会安全切换对应的：
+
+- API 来源
+- URL
+- 密钥或代理密码
+- 模型
+- 当前格式支持的附加/排除参数
+
+切换成功后，状态栏会显示“已保存并安全应用”。
+
+每个 API 配置就是一个**供应商**：名称、格式（协议）、URL、密钥和模型列表都属于它自己。
+
+- 在面板中修改“格式”只会改当前配置的草稿，不会立刻切换酒馆的补全源，也不会带入其他配置的 URL；点击保存后才应用。例如把 OpenAI Compatible 配置改成 Gemini，它仍使用自己的 URL。
+- 格式或 URL 的变更导致密钥需要存入另一个密钥槽（如 Custom → Gemini 反代）时，保存会沿用该配置原有密钥；如果密钥明文不可读（未允许显示密钥），会提示在 Key 输入框重新填写
+- 在酒馆原生界面切换补全源，只会影响状态栏显示，不会改写面板中的配置。
+
+**选模型就是选供应商**：模型下拉的“收藏”列表按配置分组，当前配置在最前。点击其他配置分组下的模型，会把该配置（来源、URL、密钥）连同这个模型一起应用到酒馆；配置保存的默认模型不变。
+
+**单个模型可以指定自己的格式**：在“渠道管理”的收藏目录里，每个模型都有一个格式下拉，默认是“跟随渠道”。例如 OpenAI Compatible 渠道中的某个模型可以单独设为 OpenAI Responses。选中这个模型时，插件使用渠道自己的 URL，并按该模型的格式连接。
+
+- 格式需要另一个密钥槽时（如 Custom → Gemini 反代），保存时会把渠道原有的 Key 带过去；Key 明文不可读时，请在渠道管理中填写 Key 后再保存。这个过程不会改动该密钥槽当前正在使用的密钥。
+- 如果没有可用密钥，插件会拒绝切换并提示
+
+**按格式查看**：模型下拉新增 **格式** 视图。所有渠道的收藏模型按实际使用的格式分组，每个模型都标出所属渠道，例如：
+
+```
+OpenAI 兼容      渠道A 的 模型1 · 渠道B 的 模型2
+OpenAI Responses 渠道B 的 模型3 · 渠道C 的 模型4
+```
+
+点击任意一项，都会以该模型的格式应用它所属的渠道。
+
+通过 Quick Reply / STscript 的 `/model`、原生模型控件或其他扩展切换模型时，面板会立即同步显示；`/preset 某预设 | /model 某模型` 这类链式命令中，后执行的 `/model` 会生效并显示，不会被预设绑定的模型覆盖。
+
+“排除主体参数”沿用 SillyTavern 原生 YAML 语法，例如：
+
+```yaml
+- temperature
+- top_p
+- frequency_penalty
+```
+
+发送前，api快捷工具 会确认配置的格式，再删除这些请求顶层字段。在 TauriTavern 中，排除规则通过原生参数存储交给宿主后端，在最终请求主体上应用。
+
+### 4. 管理密钥
+
+Key 输入框支持：
+
+- 点击眼睛显示或隐藏密钥
+- 复制当前密钥
+- 打开 SillyTavern 原生密钥管理器
+
+切换配置时，插件不会自动把已保存密钥明文填进输入框。只有点击眼睛或复制时，才会按需读取密钥。
+
+- **SillyTavern**：在 `config.yaml` 中设置 `allowKeysExposure: true`，然后重启 SillyTavern。
+- **TauriTavern**：打开酒馆的**用户设置**面板，点击独立的 **TauriTavern Settings（齿轮）**，进入 **Misc（杂项）**，启用中文界面中的 **允许显示密钥**（`Allow Keys Exposure`），保存后重启 TauriTavern。
+
+该设置只影响查看、复制及历史密钥明文去重；TT 通过后端获取模型不需要开启密钥明文权限。
+
+### 5. 密钥池（一个地址，多个密钥）
+
+在**渠道管理**中，每个渠道的「API 密钥」下方有一个「密钥池」：
+
+- 勾选 **多密钥轮询 + 故障转移** 后，请求会在「主密钥 + 密钥池」之间**轮流**使用；某个密钥返回 401 / 403 / 429（限流、额度用尽）或 5xx 时，自动换下一个密钥重试。
+- 密钥池文本框**每行一个额外密钥**；留空保存不会改动已保存的密钥池，点击**清空密钥池**再保存可移除。
+- 主密钥始终排在最前；输入框中的密钥会写入酒馆原生 Secrets（反代渠道写入 Reverse Proxy 预设），不写进插件配置明文。
+
+> 轮询与故障转移发生在酒馆前端到本地服务的请求这一层，依赖 SillyTavern 后端按 `secret_id`（或反代 `proxy_password`）逐请求解析密钥。老版本 SillyTavern 若无此机制，轮询会退化为始终使用活动密钥（即原有行为）。
+
+## 模型列表
+
+OpenAI Compatible、Claude（Anthropic）、Gemini 和 OpenCode 配置均提供：
+
+- **可搜索模型下拉** — 点开后可在 **★ 收藏**、**☁ 全部**、**格式** 三个视图间切换，支持模糊搜索和键盘上下选择
+  - 每次打开酒馆默认显示收藏；获取模型后自动切到“全部”，直到你手动切回收藏
+  - 每个模型前的 ☆ / ★ 可直接收藏或取消收藏；“全部”中已收藏的模型带金色星标和左侧金色边框
+  - 搜索框输入一个不存在的模型 ID，可一键“收藏并使用”
+  - 模型列表从不自动获取：“全部”和渠道管理的“远端模型”显示的是你上一次手动获取的结果，点 ↻ 或“获取可用模型”才会重新拉取
+- **添加** — 手动添加任意模型 ID 到收藏并使用
+- **获取模型** — 从当前 API 的 `/models` 获取模型，并切换到“全部”列表
+- **渠道管理**（服务器图标）— 左侧是渠道列表，右侧可编辑渠道的名称、协议、URL 和 Key，并整理它的收藏目录：添加、编辑、删除、排序，为单个模型指定格式，从远端模型中勾选收藏，以及一键清理已失效的收藏（标 ⚠）
+
+每个 API 配置都有自己独立的模型列表。切换配置时，对应的模型列表也会一起切换。
+
+SillyTavern 的 OpenAI Compatible 优先直接访问 `/models`，失败后尝试后端；Claude、Gemini、OpenCode 以及 TauriTavern 使用后端查询，无需读取已保存 Key 的明文。远端获取取决于宿主和服务是否支持模型列表接口；部分 SillyTavern 版本不支持 Claude 模型查询，此时会明确提示失败，仍可手动添加模型。附加请求头支持与原生编辑器一致的 YAML / JSON 对象。
+
+## TT Custom 子协议
+
+在 TauriTavern 中，插件额外支持：
+
+- 自定义（兼容 OpenAI Responses）
+- 自定义（兼容 Claude Messages）
+- 自定义（兼容 Gemini generateContent）
+- 自定义（兼容 Gemini Interactions）
+
+可从 TT 原生聊天补全来源或插件格式列表切换。它们使用 TT 原生 Custom 协议处理和 Custom 密钥槽，各协议的附加参数独立保存。
+
+## 导入原生 OAI 设置
+
+点击 **导入原 OAI 设置**，可以扫描 SillyTavern 当前 OpenAI 配置；在 TT 原生 OpenCode 来源下也可导入当前 OpenCode 配置及其绑定密钥。
+
+插件会自动过滤已经导入过的相同配置，选择需要的配置后点击“添加”即可。
+
+导入不会删除或修改原来的 SillyTavern 配置。
+
+## 折叠面板
+
+点击 api快捷工具 标题栏可收起/展开面板，也支持聚焦后按 Enter 或空格。
+
+收起后仅显示：
+
+```text
+OpenAI Compatible · 我的配置 · gpt-4.1
+```
+
+## 对话补全预设联动
+
+面板“参数”一栏有 **联动预设** 开关，**默认关闭**。
+
+**关闭时**（默认）：预设只管提示词与采样参数。切换预设不会改变当前配置的来源、URL、密钥和模型（即使原生“预设绑定连接”开启也一样）；保存预设或保存 API 配置都不会记录绑定。
+
+**开启后**：可以让 SillyTavern 的对话补全预设记住 API 配置。关闭开关不会删除已有绑定，重新开启即可恢复。
+
+推荐用法（开启联动后）：
+
+1. 选择一个 Quicker API 配置
+2. 选择需要的模型
+3. 点击 **保存 API 配置**
+4. 保存或更新当前 SillyTavern 对话补全预设
+
+以后切换这个预设时，插件会自动恢复绑定的 API 配置和密钥。
+
+同一个 API 配置可以绑定多个预设，每个预设可以保存不同模型。
+
+已绑定的 api快捷工具 预设会恢复其 API 配置及模型，不依赖原生“预设绑定连接”开关；未绑定的预设仍由 SillyTavern 自行处理。
+
+## 便捷方案
+
+“便捷按钮管理”可以创建一键切换方案。每个方案可以自由组合：
+
+- SillyTavern 对话补全预设
+- Quicker API 配置
+- 模型
+
+例如：
+
+```text
+日常聊天 = Claude 预设 + Anthropic 配置 + claude 模型
+快速回复 = 简短预设 + OpenAI Compatible 配置 + flash 模型
+```
+
+保存后，点击发送栏附近的闪电按钮即可快速切换。
+
+便捷入口可以放在：
+
+- 发送栏左侧
+- 发送栏右侧
+- Quick Reply 按钮栏
+- 不使用便捷按钮
+
+方案会按照以下顺序安全执行：
+
+```text
+对话补全预设 → API 配置 → 模型
+```
+
+打开闪电菜单时，**当前正在使用的方案**会以 ✔ 和高亮边框标出：只要当前的预设、API 配置和模型与方案中设定的各项一致即视为使用中（方案未设定的项不参与比较，例如方案只设了渠道和模型，则任意预设下都会亮起）。
+
+### 预设参数
+
+每个方案的详情中有 **预设参数** 栏，默认关闭，参数完全跟随预设。启用后可为该方案单独调整：
+
+- 温度、频率惩罚、存在惩罚、Top P
+- 数值留空 = 跟随预设；取消勾选某一项 = 本方案不发送该参数
+
+这些覆盖只在该方案“使用中”时作用于每次请求，不会修改预设文件；一旦切换到其他渠道/模型/预设，就恢复为预设自身的参数。适合同一预设搭配不同模型时使用不同采样参数，或需要不发送某些参数的模型。
+
+如果方案引用的 API 配置或预设已被删除，该方案会在管理列表和闪电菜单中以橙色 ⚠ 标出，点击时会提示原因而不会执行；它不影响其他方案的新增和保存，重新选择配置/预设后即可恢复。
+
+## SillyTavern 需要修改的设置
+
+### 允许读取已保存密钥（可选但推荐）
+
+编辑 SillyTavern 的 `config.yaml`：
+
+```yaml
+allowKeysExposure: true
+```
+
+修改后重启 SillyTavern。
+
+启用后，api快捷工具 才能：
+
+- 点击眼睛查看已保存密钥
+- 复制已保存密钥
+- 按密钥内容避免重复保存
+- 在迁移原生 OpenAI 配置时复制官方 Key 到 Custom 密钥槽
+
+如果保持为 `false`，插件仍然可以正常保存和切换配置，但不能读取已有密钥明文；部分迁移项目需要手动重新填写 Key。
+
+> 开启 `allowKeysExposure` 后，浏览器端扩展可以请求密钥明文。请只安装可信扩展，不要在不受信任的公网实例上随意开启。
+
+
+## 数据保存与跨浏览器使用
+
+- API 配置、模型列表、便捷方案、入口位置、快捷 URL 和预设绑定保存在 SillyTavern 的 `extension_settings.quickerApi`。
+- **例外：面板展开/收起状态仅保存在当前浏览器的 localStorage，不属于服务端配置。**
+- 上述 API 配置等共享数据通过宿主原生设置机制保存，不依赖浏览器本地存储。SillyTavern 使用 `/api/settings/save` 写入当前用户的 `settings.json`（通常位于 `data/<用户>/settings.json`，以数据目录设置为准）；TauriTavern 也可能使用 `/api/settings/patch` 增量保存，实际数据目录由应用管理。
+- 密钥保存在 SillyTavern 原生 Secrets 中，Reverse Proxy Password 保存在原生 Reverse Proxy Preset 中。
+
+API 配置保存和便捷方案总保存会等待服务器确认。保存失败或超时会弹出提示，请检查连接后重试保存，不要直接刷新以免丢失未保存的修改。有未确认的设置时，离页会尝试触发浏览器提醒，但移动端强制结束进程不保证提醒生效。
+
+这沿用 SillyTavern 的设置机制，**不是实时推送，也不跨不同服务器/用户自动同步**。不要在多个长期打开的浏览器中同时修改设置：旧页面可能覆盖新页面的更改。切换浏览器编辑前，请先完成保存并在目标浏览器刷新。
+
+插件不会把密钥编辑框的明文写入 Profile、测试日志或 README；不要在自定义 Headers/Body 中填写不希望保存在用户设置里的敏感信息。
+
+卸载插件后，SillyTavern 原生密钥和最后一次应用的连接字段仍然保留。
+
+## 配置备份与恢复
+
+配置行右侧的「导出备份」「导入备份」按钮可以把配置、密钥与搭配方案打包成一个 JSON 文件，方便迁移或备份。
+
+- **导出备份**：生成 JSON 文件，包含全部 API 配置、密钥池、搭配方案（预设绑定）、便捷方案、快捷 URL 和联动偏好。密钥明文仅在浏览器有权读取（`allowKeysExposure`）时才写入备份；无法读取的密钥会被跳过并在提示中说明数量。
+- **导入备份**：选择备份 JSON 文件即可恢复。导入时密钥会重新写入 SillyTavern 原生 Secrets（值相同的密钥会复用，不会重复）；配置里的密钥引用会自动指向新密钥。已存在的同名配置会保留并生成新副本，不会覆盖现有数据。
+- 备份文件包含密钥明文，请妥善保管，只在可信设备间传输。
+
+> 跨服务器/用户迁移时，搭配方案里引用的对话补全预设名需要目标环境存在同名预设，否则该绑定会被标记为失效。
+
+## 注意事项
+
+- 不要同时启用 api快捷工具 和 API Hub，它们都会管理 API 连接状态
+- 检测到 API Hub 时，api快捷工具 会停止接管连接，避免两个扩展互相覆盖
+- OpenAI Compatible 支持附加 Body、附加 Headers 和排除参数；Anthropic/Gemini 仅支持排除请求顶层参数
+- 如果状态栏显示“安全阻断”，请重新检查或保存对应配置的密钥
+- 如果看不到便捷入口，请到“便捷按钮管理 → 位置设置”确认没有选择“不使用便捷按钮”
+
+## 开发与回归验证
+
+业务代码保留在 `index.js`；宿主差异集中在 `platform.js`。新增平台差异时优先扩展适配层，不在 Profile、密钥、预设和便捷方案中散落平台判断。
+
+测试需要 Node.js 22+。浏览器回归还需要 Chromium/Chrome/Edge，以及 SillyTavern 的 `public` 静态资源；插件不在 SillyTavern 目录内时，可设置 `ST_PUBLIC_DIR`，浏览器不在常见位置时可设置 `CHROME_PATH`。
+
+## 卸载
+
+删除以下目录：
+
+```text
+SillyTavern/public/scripts/extensions/third-party/ST-Quicker-Api
+```
+
+然后刷新 SillyTavern 页面。
+
+卸载不会主动删除：
+
+- SillyTavern 原生密钥
+- 已保存的插件设置数据
+- 最后一次安全应用的原生连接字段
+
+## 许可
+
+本项目依据 [GPL-3.0](LICENSE) 发布。这是独立维护的修改版本（最近修改：2026 年 11 月）。

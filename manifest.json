@@ -1,0 +1,12 @@
+{
+    "name": "ST Quicker Api",  
+    "display_name": "api快捷工具",
+    "loading_order": 3,
+    "requires": [],
+    "optional": [],
+    "description": "更方便地管理/切换 API 配置，支持配置与密钥备份",
+    "js": "index.js",
+    "css": "style.css",
+    "author": "120221393-dot",
+    "version": "4.6.18"
+}
