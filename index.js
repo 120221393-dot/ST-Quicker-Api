@@ -3661,7 +3661,7 @@ function buildModelsEndpoint(endpoint) {
     const url = new URL(endpoint);
     url.hash = '';
     url.search = '';
-    url.pathname = url.pathname.replace(/\/(chat\/completions|responses)\/?$/i, '').replace(/\/$/, '') + '/models';
+    url.pathname = url.pathname.replace(/\/(chat\/completions|responses|models)\/?$/i, '').replace(/\/$/, '') + '/models';
     return url.toString();
 }
 
@@ -3728,23 +3728,32 @@ async function fetchModelsForProfile(profile, endpoint) {
     }
     const config = FORMATS[profile.format];
     const provider = profile.format === 'anthropic' || profile.format === 'gemini';
-    const proxy = usesProxyProfile(profile.format, endpoint) ? getBoundProxyPreset(profile) : null;
-    if (usesProxyProfile(profile.format, endpoint) && !proxy) throw new Error('代理凭据绑定缺失，请先保存配置。');
+    const proxyMode = usesProxyProfile(profile.format, endpoint);
+    const proxy = proxyMode ? getBoundProxyPreset(profile) : null;
+    if (proxyMode && !proxy) throw new Error('代理凭据绑定缺失，请先保存配置。');
+    // 密钥池里的每一把钥匙都参与获取模型：单把失效（欠费/封禁）不应拖垮整个渠道。
+    const emptyId = settings().emptySecretIds?.[config.secretKey];
+    const poolIds = profileKeyPool(profile).filter(id => id !== emptyId);
     const backendOnly = platform.preferBackendModels || profile.format !== 'openai';
     let frontendError = null;
-    if (!backendOnly) try {
-        const key = profile.secretId ? await findSecretBounded(config.secretKey, profile.secretId) : '';
-        if (profile.secretId && key === null) throw new Error('浏览器无权读取已保存密钥');
-        const headers = { Accept: 'application/json', ...customHeaderObject(profile.includeHeaders) };
-        if (key && !Object.keys(headers).some(name => name.toLowerCase() === 'authorization')) headers.Authorization = `Bearer ${key}`;
-        const { response, data } = await fetchJsonWithTimeout(buildModelsEndpoint(endpoint), { method: 'GET', headers, cache: 'no-store' });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const models = modelIdsFromPayload(data);
-        if (!models.length) throw new Error('前端 /models 响应未包含模型列表');
-        return { models, route: '前端 /models' };
-    } catch (error) {
-        frontendError = error;
-        console.warn('[QuickerApi] Frontend /models failed; falling back to backend status:', error);
+    if (!backendOnly) {
+        const keyIds = proxyMode ? [''] : (poolIds.length ? poolIds : ['']);
+        for (const id of keyIds) {
+            try {
+                const key = id ? await findSecretBounded(config.secretKey, id) : '';
+                if (id && key === null) throw new Error('浏览器无权读取已保存密钥');
+                const headers = { Accept: 'application/json', ...customHeaderObject(profile.includeHeaders) };
+                if (key && !Object.keys(headers).some(name => name.toLowerCase() === 'authorization')) headers.Authorization = `Bearer ${key}`;
+                const { response, data } = await fetchJsonWithTimeout(buildModelsEndpoint(endpoint), { method: 'GET', headers, cache: 'no-store' });
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const models = modelIdsFromPayload(data);
+                if (!models.length) throw new Error('前端 /models 响应未包含模型列表');
+                return { models, route: '前端 /models' };
+            } catch (error) {
+                frontendError = error;
+            }
+        }
+        console.warn('[QuickerApi] Frontend /models failed; falling back to backend status:', frontendError);
     }
 
     let previousActiveId = '';
@@ -3772,25 +3781,38 @@ async function fetchModelsForProfile(profile, endpoint) {
             throw new Error(`无法激活配置绑定的 ${config.label} 密钥`);
         }
 
-        const { response, data } = await fetchJsonWithTimeout('/api/backends/chat-completions/status', {
-            method: 'POST',
-            headers: getRequestHeaders(),
-            body: JSON.stringify({
-                chat_completion_source: config.source,
-                reverse_proxy: provider ? endpoint : '',
-                proxy_password: proxy ? String(proxy.password || '') : '',
-                ...(profile.format === 'opencode' ? {
-                    opencode_endpoint: validateOpenCodeConnection(endpoint, profile.opencodeApiFormat),
-                    opencode_api_format: profile.opencodeApiFormat,
-                } : provider ? {} : { custom_url: endpoint, custom_api_format: config.apiFormat || 'openai_compat' }),
-                custom_include_headers: profile.includeHeaders,
-            }),
-            cache: 'no-cache',
-        }, 20000);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const models = modelIdsFromPayload(data);
-        if (!models.length) throw new Error('当前宿主或服务未返回模型列表；可通过“添加”手动填写模型 ID。');
-        return { models, route: backendOnly ? '后端 status' : '后端 status fallback', frontendError };
+        // 依次用密钥池里的每把钥匙探测；旧版宿主若在 status 中忽略 secret_id，
+        // 会自动退回上面已激活的主密钥，行为与之前保持一致。
+        const known = new Set(customEntries.map(entry => entry.id));
+        const attempts = proxyMode ? [''] : [...new Set([desiredSecretId, ...poolIds.filter(id => known.has(id))])];
+        let lastError = null;
+        for (const secretId of attempts) {
+            try {
+                const { response, data } = await fetchJsonWithTimeout('/api/backends/chat-completions/status', {
+                    method: 'POST',
+                    headers: getRequestHeaders(),
+                    body: JSON.stringify({
+                        chat_completion_source: config.source,
+                        reverse_proxy: provider ? endpoint : '',
+                        proxy_password: proxy ? String(proxy.password || '') : '',
+                        ...(secretId ? { secret_id: secretId } : {}),
+                        ...(profile.format === 'opencode' ? {
+                            opencode_endpoint: validateOpenCodeConnection(endpoint, profile.opencodeApiFormat),
+                            opencode_api_format: profile.opencodeApiFormat,
+                        } : provider ? {} : { custom_url: endpoint, custom_api_format: config.apiFormat || 'openai_compat' }),
+                        custom_include_headers: profile.includeHeaders,
+                    }),
+                    cache: 'no-cache',
+                }, 20000);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const models = modelIdsFromPayload(data);
+                if (!models.length) throw new Error('当前宿主或服务未返回模型列表；可通过“添加”手动填写模型 ID。');
+                return { models, route: backendOnly ? '后端 status' : '后端 status fallback', frontendError };
+            } catch (error) {
+                lastError = error;
+            }
+        }
+        throw lastError || new Error('当前宿主或服务未返回模型列表；可通过“添加”手动填写模型 ID。');
     } catch (backendError) {
         const error = new Error(`${frontendError ? `前端 /models：${frontendError.message}；` : ''}后端 status：${backendError.message}`);
         error.cause = backendError;
@@ -5788,7 +5810,13 @@ function generationRotationPlan(body) {
     if (!profile || profile.rotateKeys !== true) return null;
     const config = FORMATS[profile.format];
     if (body.chat_completion_source !== config.source) return null;
-    const tokens = profileKeyPool(profile).map(id => keyPoolEntryCredential(profile, id)).filter(Boolean);
+    // 请求必须真的发往本渠道：别的扩展或残留请求不能被塞入本渠道的密钥。
+    const profileEndpoint = normalizeText(profile.endpoint).replace(/\/+$/, '');
+    const bodyEndpoint = normalizeText(body.custom_url || body.reverse_proxy || '').replace(/\/+$/, '');
+    if (profileEndpoint && bodyEndpoint && profileEndpoint !== bodyEndpoint) return null;
+    // 空密钥槽（未配置密钥的占位）不参与轮询。
+    const emptyId = settings().emptySecretIds?.[config.secretKey];
+    const tokens = profileKeyPool(profile).filter(id => id !== emptyId).map(id => keyPoolEntryCredential(profile, id)).filter(Boolean);
     if (tokens.length < 2) return null;
     const mode = tokens[0].type;
     if (!tokens.every(token => token.type === mode)) return null;
@@ -5822,8 +5850,10 @@ async function isRetryableKeyFailure(response) {
     if (KEY_RETRYABLE_STATUS.has(response.status)) return true;
     if (response.status !== 400) return false;
     try {
-        const text = await response.clone().text();
-        return /unauthori[sz]ed|invalid[_ ]?(api[ _]?key|token|credential)|api[ -]?key|insufficient|quota|rate[ -]?limit|429|401|403/i.test(text.slice(0, 4000));
+        const text = String(await response.clone().text()).slice(0, 4000);
+        // SillyTavern 自身在“密钥缺失 / 上游拒绝”时返回裸 {error:true}，同样值得换钥重试。
+        if (/^\s*\{\s*"error"\s*:\s*true\s*\}\s*$/.test(text)) return true;
+        return /unauthori[sz]ed|invalid[_ ]?(api[ _]?key|token|credential)|api[ -]?key|insufficient|quota|rate[ -]?limit|429|401|403/i.test(text);
     } catch {
         return false;
     }
