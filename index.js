@@ -5767,25 +5767,51 @@ function makeQuickActionEntry(id, placement) {
         .attr('data-quicker-api-placement', placement);
 }
 
+// 轻量调试提示：手机端没有控制台，用屏幕上的小胶囊确认代码路径是否被走到。
+function flashDebugChip(text) {
+    try {
+        const id = 'quicker-api-debug-chip';
+        document.getElementById(id)?.remove();
+        const chip = document.createElement('div');
+        chip.id = id;
+        chip.textContent = text;
+        chip.style.cssText = 'position:fixed;left:50%;top:12px;transform:translateX(-50%);z-index:2147483647;'
+            + 'background:rgba(20,20,24,.92);color:#9ae6b4;border:1px solid #2f6f4f;border-radius:999px;'
+            + 'padding:4px 12px;font:12px/1.4 monospace;pointer-events:none;opacity:1;transition:opacity .4s';
+        document.body.appendChild(chip);
+        setTimeout(() => { chip.style.opacity = '0'; }, 1200);
+        setTimeout(() => chip.remove(), 1700);
+    } catch (_) { /* 调试提示失败不影响主流程 */ }
+}
+
 let quickActionEntryDelegatesBound = false;
 function bindQuickActionEntryDelegates() {
     if (quickActionEntryDelegatesBound) return;
     quickActionEntryDelegatesBound = true;
-    $(document)
-        .on('click.quickerApiEntry', '.quicker-api__quick-entry', event => {
+    // 用原生捕获阶段监听：不依赖 jQuery 委托，也不怕 ST 在冒泡途中
+    // 调 stopPropagation（SillyDroid 打包版上就因此点不动）。
+    const ENTRY_SELECTOR = '.quicker-api__quick-entry';
+    const handleEntry = target => {
+        const el = target?.closest?.(ENTRY_SELECTOR);
+        if (!el) return false;
+        const placement = normalizeQuickActionPlacement(el.getAttribute('data-quicker-api-placement'));
+        // 命中即留痕：即便后续渲染失败，也能确认「点击确实传进来了」。
+        flashDebugChip(`点击已命中 · ${placement}`);
+        openQuickModelMenu(el, placement);
+        return true;
+    };
+    document.addEventListener('click', event => {
+        if (!handleEntry(event.target)) return;
+        event.stopPropagation();
+        event.preventDefault();
+    }, true);
+    document.addEventListener('keydown', event => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        if (handleEntry(event.target)) {
             event.stopPropagation();
-            const anchor = event.currentTarget;
-            const placement = normalizeQuickActionPlacement($(anchor).attr('data-quicker-api-placement'));
-            openQuickModelMenu(anchor, placement);
-        })
-        .on('keydown.quickerApiEntry', '.quicker-api__quick-entry', event => {
-            if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault();
-                const anchor = event.currentTarget;
-                const placement = normalizeQuickActionPlacement($(anchor).attr('data-quicker-api-placement'));
-                openQuickModelMenu(anchor, placement);
-            }
-        });
+            event.preventDefault();
+        }
+    }, true);
 }
 
 function activeQuickReplyButtonContainer() {
