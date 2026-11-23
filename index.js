@@ -5506,7 +5506,7 @@ function openQuickModelMenu(anchor, placement) {
     // Two-level navigation: a channel list first, then the models of one
     // channel. `view` is 'channels' or 'models'; `activeChannel` is the channel
     // whose model list is shown in the second level.
-    let view = 'all';
+    let view = 'channels';
     let activeChannel = null;
 
     // 把大量模型按家族分组，避免一条几百个名字的长列表。
@@ -5591,109 +5591,6 @@ function openQuickModelMenu(anchor, placement) {
         return [...major, { family: '其它', models: merged }];
     };
 
-    // 原生模型选择器：复刻 API 专页「模型选择栏」的做法——<select> + <optgroup>。
-    // 手机端由系统渲染全屏列表，滚动/分组/长列表全部不用自己操心。
-    const nativeModelPicker = (profile, modelNames) => {
-        const currentModel = current || '';
-        const select = document.createElement('select');
-        select.className = 'text_pole quicker-api__model-quick-native';
-        select.setAttribute('aria-label', `${profile.name} 模型选择`);
-
-        const groups = groupByFamily(modelNames);
-        // 只有一个家族且数量不多时，不显示 optgroup，扁平列表更清爽
-        if (groups.length <= 1) {
-            modelNames.forEach(name => {
-                const opt = document.createElement('option');
-                opt.value = name;
-                opt.textContent = name;
-                if (name === currentModel) opt.selected = true;
-                select.appendChild(opt);
-            });
-        } else {
-            groups.forEach(({ family, models: familyModels }) => {
-                const og = document.createElement('optgroup');
-                // 单个条目的家族不必标数量，避免满屏「· 1」
-                og.label = familyModels.length > 1 ? `${family} · ${familyModels.length}` : family;
-                familyModels.forEach(name => {
-                    const opt = document.createElement('option');
-                    opt.value = name;
-                    opt.textContent = name;
-                    if (name === currentModel) opt.selected = true;
-                    og.appendChild(opt);
-                });
-                select.appendChild(og);
-            });
-        }
-
-        select.addEventListener('change', event => {
-            const value = event.target.value;
-            if (!value) return;
-            void useProviderModel(profile, value);
-            closeQuickActionMenu();
-        });
-
-        const li = $('<li class="list-group-item ctx-item quicker-api__model-quick-picker" role="listitem">')
-            .append(select);
-        // 打开菜单后自动把原生下拉弹出来，少点一次
-        queueMicrotask(() => {
-            try { select.focus(); } catch (_) { /* 忽略 */ }
-        });
-        return li;
-    };
-
-    // 全局模型选择器：一次列出所有渠道的所有模型，渠道作 <optgroup>。
-    // 解决「点了某个渠道后只看得到这一个渠道的模型、退不出去」的问题——
-    // 现在点开就能跨渠道直接切，不用先选渠道再选模型。
-    const nativeAllModelsPicker = (channels, query) => {
-        const currentModel = current || '';
-        const select = document.createElement('select');
-        select.className = 'text_pole quicker-api__model-quick-native';
-        select.setAttribute('aria-label', '快速选择模型（跨渠道）');
-
-        const collect = channel => {
-            const favorites = normalizeModelList(channel.availableModels || []);
-            const fetched = profileFetchedModels(channel);
-            const base = channel.id === activeProfileId ? [current, ...favorites, ...fetched] : [...favorites, ...fetched];
-            return [...new Set(base.filter(Boolean))].filter(model => matchesModelSearch(model, query));
-        };
-
-        channels.forEach(channel => {
-            const models = collect(channel);
-            if (!models.length) return;
-            const isActiveChannel = channel.id === activeProfileId;
-            const og = document.createElement('optgroup');
-            og.label = isActiveChannel ? `${channel.name}（当前）` : channel.name;
-            models.forEach(name => {
-                const opt = document.createElement('option');
-                opt.value = `${channel.id}\u0000${name}`;
-                opt.textContent = name;
-                if (isActiveChannel && name === currentModel) opt.selected = true;
-                og.appendChild(opt);
-            });
-            select.appendChild(og);
-        });
-
-        if (!select.options.length) return null;
-
-        select.addEventListener('change', event => {
-            const raw = event.target.value;
-            if (!raw) return;
-            const [profileId, ...rest] = raw.split('\u0000');
-            const modelName = rest.join('\u0000');
-            const target = channels.find(channel => channel.id === profileId);
-            if (!target) return;
-            void useProviderModel(target, modelName);
-            closeQuickActionMenu();
-        });
-
-        const li = $('<li class="list-group-item ctx-item quicker-api__model-quick-picker" role="listitem">').append(select);
-        // 打开后直接把系统选择器弹出来，省一次点击
-        queueMicrotask(() => {
-            try { select.focus(); } catch (_) { /* 忽略 */ }
-        });
-        return li;
-    };
-
     const groupHeader = text => $('<li class="list-group-item ctx-header quicker-api__model-quick-group" role="presentation">').append($('<span>').text(text));
     const modelEntry = (model, owner) => {
         const isActive = Boolean(current) && model === current && owner && owner.id === activeProfileId;
@@ -5730,7 +5627,7 @@ function openQuickModelMenu(anchor, placement) {
     const backEntry = () => $('<li class="list-group-item ctx-item quicker-api__model-quick-back" role="listitem" tabindex="0" data-quicker-api-actionable="true">')
         .append(
             $('<div class="qr--button-icon fa-solid fa-arrow-left">'),
-            $('<div class="qr--button-label">').text(activeChannel ? '返回渠道列表' : '返回快速选择'),
+            $('<div class="qr--button-label">').text('返回渠道列表'),
         )
         .on('click', () => { view = 'channels'; activeChannel = null; searchInput.val(''); render(); });
 
@@ -5746,16 +5643,6 @@ function openQuickModelMenu(anchor, placement) {
             $('<div class="qr--button-label">').text(text),
         );
 
-        // 渠道视图顶部提供回到全局快速选择的入口
-        if (view === 'channels') {
-            menu.append($('<li class="list-group-item ctx-item quicker-api__model-quick-back" role="listitem" tabindex="0" data-quicker-api-actionable="true">')
-                .append(
-                    $('<div class="qr--button-icon fa-solid fa-arrow-left">'),
-                    $('<div class="qr--button-label">').text('返回快速选择'),
-                )
-                .on('click', () => { view = 'all'; activeChannel = null; searchInput.val(''); render(); }));
-        }
-
         // Second level: the model catalog of the chosen channel.
         if (view === 'models' && activeChannel) {
             menu.append(backEntry());
@@ -5765,12 +5652,14 @@ function openQuickModelMenu(anchor, placement) {
             const base = activeChannel.id === activeProfileId ? [current, ...favorites, ...fetched] : [...favorites, ...fetched];
             const modelNames = [...new Set(base.filter(Boolean))]
                 .filter(model => matchesModelSearch(model, query));
-            if (modelNames.length) {
-                // 和 API 专页的模型选择栏一致：原生 <select> + <optgroup>。
-                // 之前自己造滚动浮层，手机上滚不动、位置也不对；
-                // 改用原生控件后滚动和分组完全交给系统，不会再出兼容问题。
-                menu.append(nativeModelPicker(activeChannel, modelNames));
-            }
+            // 模型列表用可滚动的 <li> 渲染（不用原生 <select>）：
+            // 需求是「一个渠道的模型全部铺在这里，滚一下就能看到下面的」，
+            // 原生下拉一次只显示十来行、还得再点开，不符合这个交互。
+            const groups = groupByFamily(modelNames);
+            groups.forEach(({ family, models: familyModels }) => {
+                if (groups.length > 1) menu.append(groupHeader(`${family} · ${familyModels.length}`));
+                append(familyModels.map(model => modelEntry(model, activeChannel)));
+            });
             // 不在列表里的模型 ID 依然支持回车添加
             if (query && hasManagedModels(activeChannel.format) && !favorites.includes(query) && !fetched.includes(query)) {
                 menu.append(addEntry(activeChannel));
@@ -5779,35 +5668,12 @@ function openQuickModelMenu(anchor, placement) {
             return;
         }
 
-        // 默认视图：所有渠道的模型合成一个原生选择器，点开就能跨渠道快速切换。
-        // 不再要求「先点渠道 → 再点模型 → 想换还得返回」，那是之前丢失画面的根源。
-        const allChannels = profiles().filter(channel => !channel.draft && isFormatSupported(channel.format));
-        const ordered = [...allChannels.filter(channel => channel.id === activeProfileId), ...allChannels.filter(channel => channel.id !== activeProfileId)];
-        const activeName = ordered.find(channel => channel.id === activeProfileId)?.name || '未选择渠道';
-        menu.append(groupHeader(`快速选择模型 · ${activeName}`));
-        const picker = nativeAllModelsPicker(ordered, query);
-        if (picker) {
-            menu.append(picker);
-        } else {
-            menu.append(emptyEntry(query ? '没有匹配的模型' : '没有可用模型；请先在设置里配置 API 渠道'));
-        }
-
-        // 搜索框输入了具体模型 ID 时，允许直接收藏并启用
-        if (query) {
-            const target = ordered.find(channel => channel.id === activeProfileId) || ordered[0];
-            if (target && hasManagedModels(target.format) && !normalizeModelList(target.availableModels).includes(query)) {
-                menu.append(addEntry(target));
-            }
-        }
-
-        // 底部的渠道管理入口：想看某个渠道的全部模型 / 编辑配置时再进
-        const manageEntry = $('<li class="list-group-item ctx-item quicker-api__model-quick-back" role="listitem" tabindex="0" data-quicker-api-actionable="true">')
-            .append(
-                $('<div class="qr--button-icon fa-solid fa-plug">'),
-                $('<div class="qr--button-label">').text(`按渠道管理（${ordered.length}）`),
-            )
-            .on('click', () => { view = 'channels'; activeChannel = null; render(); });
-        menu.append(manageEntry);
+        // First level: channel list, the current channel first.
+        const channels = profiles().filter(channel => !channel.draft && isFormatSupported(channel.format)
+            && (channel.id === activeProfileId || matchesModelSearch(channel.name, query)));
+        const ordered = [...channels.filter(channel => channel.id === activeProfileId), ...channels.filter(channel => channel.id !== activeProfileId)];
+        append(ordered.map(channelEntry));
+        if (!ordered.length) menu.append(emptyEntry('没有匹配的渠道；请先在设置里配置 API 渠道'));
     };
     render();
     searchInput.on('input', render).on('keydown', event => {
@@ -5872,11 +5738,25 @@ function openQuickModelMenu(anchor, placement) {
             el.style.maxHeight = `${available}px`;
             el.style.position = 'fixed';
             el.style.bottom = ''; // 清空，避免与 top 叠加
-            // 先按内容自然高度量一次；内容短时贴住输入框底边向上排，
-            // 内容长时再撑满可用高度，避免短菜单飘到屏幕顶部。
-            el.style.top = '0px';
+            el.style.top = `${topLimit}px`;
+
+            // 高度必须按「未受 maxHeight 限制」的内容高度来算：
+            // 先临时放开高度量 scrollHeight，再恢复上限。
+            // 否则量到的是被截断的旧值，菜单要么飘到顶部、要么高度不足无法滚到末尾。
+            const prevMax = el.style.maxHeight;
+            el.style.maxHeight = 'none';
             const natural = Math.min(el.scrollHeight || available, available);
+            el.style.maxHeight = prevMax;
+
+            // 内容短：贴住输入框底边；内容长：撑满可用高度并贴顶，
+            // 超出部分交给 CSS 的 overflow-y:auto 滚动。
             el.style.top = `${Math.max(topLimit, bottomLimit - natural)}px`;
+
+            // 关键：显式给出行高可算的滚动容器属性，WebView 里
+            // 缺少 min-height:0 / -webkit-overflow-scrolling 时不跟手。
+            el.style.overflowY = 'auto';
+            el.style.touchAction = 'pan-y';
+            el.style.webkitOverflowScrolling = 'touch';
             const width = Math.min(el.getBoundingClientRect().width || 260, innerWidth - gap * 2);
             el.style.width = `${width}px`;
             const left = Math.max(gap, Math.min(anchorRect.left, innerWidth - width - gap));
