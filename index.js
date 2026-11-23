@@ -5469,10 +5469,10 @@ function enableTouchScroll(node) {
 function closeQuickActionMenu() {
     quickActionPopper?.destroy?.();
     quickActionPopper = null;
-    const reflow = quickActionMenu?.data('reflowMenu');
-    if (reflow) globalThis.visualViewport?.removeEventListener?.('resize', reflow);
     quickActionMenu?.remove();
     quickActionMenu = null;
+    quickActionHead = null;
+    quickActionList = null;
     $(document).off('.quickerApiMenu');
     $(window).off('.quickerApiMenu');
     $(globalThis.visualViewport).off('.quickerApiMenu');
@@ -5639,14 +5639,14 @@ function openQuickModelMenu(anchor, placement) {
                 ),
                 $('<div class="quicker-api__quick-menu-params fa-solid fa-chevron-right" title="查看该渠道的模型">'),
             )
-            .on('click', () => { view = 'models'; activeChannel = channel; searchInput.val(''); render(); });
+            .on('click', () => { view = 'models'; activeChannel = channel; searchInput.val(''); renderAndPlace(); });
     };
     const backEntry = () => $('<li class="list-group-item ctx-item quicker-api__model-quick-back" role="listitem" tabindex="0" data-quicker-api-actionable="true">')
         .append(
             $('<div class="qr--button-icon fa-solid fa-arrow-left">'),
             $('<div class="qr--button-label">').text('返回渠道列表'),
         )
-        .on('click', () => { view = 'channels'; activeChannel = null; searchInput.val(''); render(); });
+        .on('click', () => { view = 'channels'; activeChannel = null; searchInput.val(''); renderAndPlace(); });
 
     const render = () => {
         const query = normalizeText(searchInput.val());
@@ -5695,8 +5695,16 @@ function openQuickModelMenu(anchor, placement) {
         append(ordered.map(channelEntry));
         if (!ordered.length) menu.append(emptyEntry('没有匹配的渠道；请先在设置里配置 API 渠道'));
     };
+    // 每次重绘后重新定位：渠道列表和模型列表高度差别很大，
+    // 不重排的话面板 top 还停在上一次的位置，切换时画面会跑偏。
+    // 通过 data 取 placeMenu 是为了避开 TDZ——placeMenu 在下方才定义。
+    const renderAndPlace = () => {
+        render();
+        const fn = panel.data('reflowMenu');
+        if (typeof fn === 'function') fn();
+    };
     render();
-    searchInput.on('input', render).on('keydown', event => {
+    searchInput.on('input', renderAndPlace).on('keydown', event => {
         if (event.key === 'Enter') {
             event.preventDefault();
             // 全局视图和单个模型视图都支持：输入模型 ID 回车收藏并启用
@@ -5829,7 +5837,7 @@ function openQuickModelMenu(anchor, placement) {
     quickActionPopper = null;
     placeMenu();
     const reflowMenu = () => { placeMenu(); };
-    menu.data('reflowMenu', reflowMenu);
+    panel.data('reflowMenu', reflowMenu);
     globalThis.visualViewport?.addEventListener?.('resize', reflowMenu);
     $(window).on('resize.quickerApiMenuReflow', reflowMenu);
 
@@ -5865,6 +5873,9 @@ function openQuickModelMenu(anchor, placement) {
         scrollRoot.dataset.quickerApiScrollLocked = '1';
     }
     $(document).on('pointerdown.quickerApiMenu', event => {
+        // 点在触发按钮上不关闭：否则会「先关后开」，
+        // 重开时 anchor 位置已经变了，面板就定位到别处（画面跑偏）。
+        if (event.target?.closest?.('.quicker-api__quick-entry')) return;
         if (!menu[0].contains(event.target) && !anchor.contains(event.target)) closeQuickActionMenu();
     }).on('focusin.quickerApiMenu', event => {
         if (!menu[0].contains(event.target) && event.target !== anchor) closeQuickActionMenu();
