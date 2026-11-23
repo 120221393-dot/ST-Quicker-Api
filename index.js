@@ -5529,6 +5529,24 @@ function closeQuickActionMenu() {
 // the live model plus the current channel's favorites/fetched models, followed
 // by every other channel's favorites (picking one applies that channel too).
 function openQuickModelMenu(anchor, placement) {
+    // 手机端（SillyDroid/TT 内核）出问题时用户看不到控制台，
+    // 这里把异常直接弹到屏幕上，避免「点了没反应」无从排查。
+    try {
+        openQuickModelMenuInner(anchor, placement);
+    } catch (error) {
+        console.error('[api快捷工具] 打开模型菜单失败', error);
+        try {
+            const box = document.createElement('div');
+            box.style.cssText = 'position:fixed;left:8px;right:8px;bottom:8px;z-index:99999;background:#2a1d1d;color:#ffb4b4;border:1px solid #a33;border-radius:10px;padding:10px 12px;font:12px/1.5 monospace;white-space:pre-wrap;max-height:40vh;overflow:auto';
+            box.textContent = `模型菜单打开失败：\n${error && error.message ? error.message : error}\n\n${(error && error.stack ? String(error.stack).split('\n').slice(0, 4).join('\n') : '')}`;
+            box.addEventListener('click', () => box.remove());
+            document.body.appendChild(box);
+            setTimeout(() => box.remove(), 15000);
+        } catch (_) { /* 兜底提示失败就放弃 */ }
+    }
+}
+
+function openQuickModelMenuInner(anchor, placement) {
     if (quickActionMenu?.data('anchor') === anchor) return closeQuickActionMenu();
     closeQuickActionMenu();
     const profile = selectedProfile() || profiles().find(item => item.id === settings().activeProfileId) || null;
@@ -5742,10 +5760,31 @@ function makeQuickActionEntry(id, placement) {
     const entry = placement !== 'qrButtons'
         ? $('<div class="quicker-api__quick-entry fa-solid fa-microchip interactable" role="button" tabindex="0" aria-label="api快捷工具 模型快速选择" title="api快捷工具 模型快速选择"></div>')
         : $('<button type="button" class="qr--button quicker-api__quick-entry" aria-label="api快捷工具 模型快速选择" title="api快捷工具 模型快速选择"><i class="fa-solid fa-microchip"></i><span>api快捷工具</span></button>');
+    // 点击/回车统一走 document 级委托（见 bindQuickActionEntryDelegates）。
+    // 早期版本把处理器直接绑在元素上，扩展热重载后 DOM 里的旧元素
+    // 会带着失效闭包继续存在，表现为「点 CPU 图标没反应」。
     return entry.attr('id', id)
-        .on('click.quickerApi', event => { event.stopPropagation(); openQuickModelMenu(event.currentTarget, placement); })
-        .on('keydown.quickerApi', event => {
-            if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openQuickModelMenu(event.currentTarget, placement); }
+        .attr('data-quicker-api-placement', placement);
+}
+
+let quickActionEntryDelegatesBound = false;
+function bindQuickActionEntryDelegates() {
+    if (quickActionEntryDelegatesBound) return;
+    quickActionEntryDelegatesBound = true;
+    $(document)
+        .on('click.quickerApiEntry', '.quicker-api__quick-entry', event => {
+            event.stopPropagation();
+            const anchor = event.currentTarget;
+            const placement = normalizeQuickActionPlacement($(anchor).attr('data-quicker-api-placement'));
+            openQuickModelMenu(anchor, placement);
+        })
+        .on('keydown.quickerApiEntry', '.quicker-api__quick-entry', event => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                const anchor = event.currentTarget;
+                const placement = normalizeQuickActionPlacement($(anchor).attr('data-quicker-api-placement'));
+                openQuickModelMenu(anchor, placement);
+            }
         });
 }
 
@@ -5757,6 +5796,7 @@ function activeQuickReplyButtonContainer() {
 
 function ensureQuickActionEntries() {
     if (extensionDisabled || teardownPending) return;
+    bindQuickActionEntryDelegates();
     const placement = normalizeQuickActionPlacement(settings().quickActionPlacement);
     if (placement === 'disabled') {
         $('#quicker_api_quick_left, #quicker_api_quick_right, [data-quicker-api-qr-entry]').remove();
@@ -5765,6 +5805,10 @@ function ensureQuickActionEntries() {
     }
     if (placement === 'leftSendForm') {
         $('#quicker_api_quick_right, [data-quicker-api-qr-entry]').remove();
+        // 旧版本遗留的入口可能缺少 data-quicker-api-placement，导致委托拿不到
+        // 正确 placement（甚至被 normalize 成别的值）。缺属性就重建。
+        const legacy = document.getElementById('quicker_api_quick_left');
+        if (legacy && !legacy.getAttribute('data-quicker-api-placement')) legacy.remove();
         if (!document.getElementById('quicker_api_quick_left')) {
             const extensionsButton = document.getElementById('extensionsMenuButton');
             if (!extensionsButton?.parentElement) return;
@@ -5774,6 +5818,8 @@ function ensureQuickActionEntries() {
     }
     if (placement === 'rightSendForm') {
         $('#quicker_api_quick_left, [data-quicker-api-qr-entry]').remove();
+        const legacyRight = document.getElementById('quicker_api_quick_right');
+        if (legacyRight && !legacyRight.getAttribute('data-quicker-api-placement')) legacyRight.remove();
         if (!document.getElementById('quicker_api_quick_right')) {
             const sendButton = document.getElementById('send_but');
             const entry = makeQuickActionEntry('quicker_api_quick_right', placement)[0];
