@@ -5602,6 +5602,14 @@ function openQuickModelMenu(anchor, placement) {
     // 不依赖 Popper 的 size modifier（ST 内置的旧版可能没有），自己按
     // 锚点位置与视口高度算：锚点在上半屏→向下展开；下半屏→向上展开。
     const fitToViewport = () => {
+        // 防御：任何测量异常都不应该让菜单打不开（宁可高度不限也不要抛错中断）。
+        try {
+            fitToViewportUnsafe();
+        } catch (error) {
+            console.warn('[api快捷工具] 计算菜单高度失败，回退到 CSS 高度', error);
+        }
+    };
+    const fitToViewportUnsafe = () => {
         const rect = anchor.getBoundingClientRect();
         const gap = 8;
         const vh = (globalThis.visualViewport?.height || innerHeight) || 800;
@@ -5707,9 +5715,13 @@ function openQuickModelMenu(anchor, placement) {
             { name: 'computeStyles', options: { gpuAcceleration: false } },
         ],
     }) || null;
-    // 键盘弹出/收起会改变可视高度，需重算高度而不是直接关闭菜单。
+    // 键盘弹出/收起会改变可视高度 → 重算高度，不关闭菜单。
+    // visualViewport 的 resize 在手机上极其频繁（软键盘、地址栏伸缩都会触发），
+    // 之前把它接到 closeOnViewport 上，导致菜单刚打开就被自身布局变化关掉，
+    // 表现成「点 CPU 图标没反应」。
     const refit = () => { fitToViewport(); quickActionPopper?.update?.(); };
     globalThis.visualViewport?.addEventListener?.('resize', refit);
+    menu.data('refitResize', refit);
     $(document).on('pointerdown.quickerApiMenu', event => {
         if (!menu[0].contains(event.target) && !anchor.contains(event.target)) closeQuickActionMenu();
     }).on('focusin.quickerApiMenu', event => {
@@ -5718,8 +5730,10 @@ function openQuickModelMenu(anchor, placement) {
         if (event.key === 'Escape') { event.preventDefault(); closeQuickActionMenu(); anchor.focus?.(); }
         if (event.key === 'Tab') closeQuickActionMenu();
     });
-    $(window).on('resize.quickerApiMenu scroll.quickerApiMenu blur.quickerApiMenu', closeOnViewport);
-    $(globalThis.visualViewport).on('resize.quickerApiMenu scroll.quickerApiMenu', closeOnViewport);
+    // 只保留 blur（切走应用时收起）。resize/scroll 不关菜单：
+    // 手机端打开浮层时浏览器会为了让锚点可见而滚动页面，
+    // 一旦监听 scroll 就会「刚打开就被自己关掉」，表现成点击没反应。
+    $(window).on('blur.quickerApiMenu', closeOnViewport);
     enableTouchScroll(menu[0]);
     if (!globalThis.matchMedia?.('(pointer: coarse)').matches) searchInput.trigger('focus');
 }
