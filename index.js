@@ -5474,6 +5474,13 @@ function closeQuickActionMenu() {
     $(document).off('.quickerApiMenu');
     $(window).off('.quickerApiMenu');
     $(globalThis.visualViewport).off('.quickerApiMenu');
+    // 解除底层滚动锁（详见 openQuickModelMenu 里的加锁逻辑）
+    const scrollRoot = document.getElementById('chat') || document.scrollingElement;
+    if (scrollRoot && scrollRoot.dataset.quickerApiScrollLocked) {
+        scrollRoot.style.overscrollBehavior = scrollRoot.dataset.quickerApiPrevOverscroll || '';
+        delete scrollRoot.dataset.quickerApiPrevOverscroll;
+        delete scrollRoot.dataset.quickerApiScrollLocked;
+    }
 }
 
 // The chat entry opens a quick model switcher instead of the old scheme list:
@@ -5713,6 +5720,11 @@ function openQuickModelMenu(anchor, placement) {
     //   菜单 max-height = 下边界 - 上边界
     // 菜单用 fixed 定位贴住下边界向上生长，超出部分由 overflow-y:auto 滚动。
     const gap = 8;
+    // 菜单在内容高度基础上额外往上扩展的行数（实测单行 ~29px），
+    // 让整块面板更宽松，接近满屏上沿。
+    const EXTRA_ROWS = 6;
+    const EXTRA_ROW_PX = 29;
+    const extraHeight = EXTRA_ROWS * EXTRA_ROW_PX;
     // 注意：leftSendForm 模式下 CPU 图标是插在左上角 #extensionsMenuButton
     // 那一列里的，并不在底部输入框内。所以不能靠 anchor.closest 找输入框，
     // 必须直接取底部发送栏 #send_form。取不到才退回 anchor 所在容器。
@@ -5748,9 +5760,13 @@ function openQuickModelMenu(anchor, placement) {
             const natural = Math.min(el.scrollHeight || available, available);
             el.style.maxHeight = prevMax;
 
-            // 内容短：贴住输入框底边；内容长：撑满可用高度并贴顶，
-            // 超出部分交给 CSS 的 overflow-y:auto 滚动。
-            el.style.top = `${Math.max(topLimit, bottomLimit - natural)}px`;
+            // 内容短：贴住输入框底边；内容长：撑满可用高度并贴顶。
+            // 额外往上扩展 EXTRA_ROWS 行——注意 max-height 只是上限，不会把
+            // 内容撑开，所以这里必须显式设 height，短列表才会真的多出一块。
+            const target = Math.min(available, natural + extraHeight);
+            el.style.height = `${target}px`;
+            el.style.maxHeight = `${target}px`;
+            el.style.top = `${Math.max(topLimit, bottomLimit - target)}px`;
 
             // 关键：显式给出行高可算的滚动容器属性，WebView 里
             // 缺少 min-height:0 / -webkit-overflow-scrolling 时不跟手。
@@ -5773,7 +5789,36 @@ function openQuickModelMenu(anchor, placement) {
     globalThis.visualViewport?.addEventListener?.('resize', reflowMenu);
     $(window).on('resize.quickerApiMenuReflow', reflowMenu);
 
-    const closeOnViewport = () => closeQuickActionMenu();
+    // 只在「页面/视口本身」滚动或失焦时关闭菜单。
+    // 菜单内部的滚动不能触发关闭——之前直接监听 window/visualViewport 的 scroll，
+    // 菜单里滑动模型列表时事件冒泡上去，菜单会瞬间被关掉，
+    // 看起来就像「滑动时整个界面跟着动」。
+    const closeOnViewport = event => {
+        if (event && menu[0].contains(event.target)) return;
+        closeQuickActionMenu();
+    };
+    $(window).on('resize.quickerApiMenu blur.quickerApiMenu', closeOnViewport);
+    $(globalThis.visualViewport).on('resize.quickerApiMenu', closeOnViewport);
+    // 菜单内滚动由 enableTouchScroll() 接管：它自己在 touchmove 里
+    // preventDefault 并手动设置 scrollTop，已经阻止了手势穿透到外层页面。
+    // 这里只额外拦一下滚轮事件，避免桌面/鼠标滚轮把页面一起滚走。
+    menu[0].addEventListener('wheel', event => {
+        const el = menu[0];
+        const atTop = el.scrollTop <= 0;
+        const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 1;
+        if ((atTop && event.deltaY < 0) || (atBottom && event.deltaY > 0)) event.preventDefault();
+        event.stopPropagation();
+    }, { passive: false });
+
+    // 锁住底层聊天区的滚动链：菜单是 fixed 浮层，但如果外层容器还能
+    // overscroll，手指在菜单上滑动到底部后手势会继续带动下面的页面
+    // （表现为「滑动模型时状态栏/聊天区一起动」）。
+    const scrollRoot = document.getElementById('chat') || document.scrollingElement;
+    if (scrollRoot) {
+        scrollRoot.dataset.quickerApiPrevOverscroll = scrollRoot.style.overscrollBehavior || '';
+        scrollRoot.style.overscrollBehavior = 'contain';
+        scrollRoot.dataset.quickerApiScrollLocked = '1';
+    }
     $(document).on('pointerdown.quickerApiMenu', event => {
         if (!menu[0].contains(event.target) && !anchor.contains(event.target)) closeQuickActionMenu();
     }).on('focusin.quickerApiMenu', event => {
@@ -5782,8 +5827,6 @@ function openQuickModelMenu(anchor, placement) {
         if (event.key === 'Escape') { event.preventDefault(); closeQuickActionMenu(); anchor.focus?.(); }
         if (event.key === 'Tab') closeQuickActionMenu();
     });
-    $(window).on('resize.quickerApiMenu scroll.quickerApiMenu blur.quickerApiMenu', closeOnViewport);
-    $(globalThis.visualViewport).on('resize.quickerApiMenu scroll.quickerApiMenu', closeOnViewport);
     enableTouchScroll(menu[0]);
     if (!globalThis.matchMedia?.('(pointer: coarse)').matches) searchInput.trigger('focus');
 }
