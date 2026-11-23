@@ -5467,6 +5467,8 @@ function enableTouchScroll(node) {
 function closeQuickActionMenu() {
     quickActionPopper?.destroy?.();
     quickActionPopper = null;
+    const reflow = quickActionMenu?.data('reflowMenu');
+    if (reflow) globalThis.visualViewport?.removeEventListener?.('resize', reflow);
     quickActionMenu?.remove();
     quickActionMenu = null;
     $(document).off('.quickerApiMenu');
@@ -5610,18 +5612,50 @@ function openQuickModelMenu(anchor, placement) {
             : (index + (event.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length;
         items.eq(next).trigger('focus');
     });
-    quickActionPopper = globalThis.Popper?.createPopper?.(anchor, menu[0], {
-        placement: placement === 'qrButtons' ? 'bottom-start' : placement === 'leftSendForm' ? 'top-start' : 'top-end',
-        modifiers: [
-            { name: 'offset', options: { offset: [0, 8] } },
-            { name: 'preventOverflow', options: { padding: 8 } },
-            { name: 'computeStyles', options: { gpuAcceleration: false } },
-        ],
-    }) || null;
-    if (!quickActionPopper) {
-        const rect = anchor.getBoundingClientRect();
-        menu.css({ position: 'fixed', left: `${Math.max(8, Math.min(rect.left, innerWidth - menu.outerWidth() - 8))}px`, top: `${Math.max(8, rect.top - menu.outerHeight() - 8)}px` });
-    }
+    // 手机酒馆的输入框固定在底部，菜单绝不能压住它。
+    // 这里不用 Popper 的 boundary（不同打包版行为不一致），
+    // 直接自己算几何：
+    //   下边界 = 输入框容器顶部 - 间隙
+    //   上边界 = 视口顶部 + 间隙
+    //   菜单 max-height = 下边界 - 上边界
+    // 菜单用 fixed 定位贴住下边界向上生长，超出部分由 overflow-y:auto 滚动。
+    const formEl = anchor.closest('#send_form, .send_form, #form_sheld')
+        || document.getElementById('send_form')
+        || document.querySelector('.send_form');
+    const gap = 8;
+
+    const viewportHeight = () => (globalThis.visualViewport?.height || innerHeight || 0);
+
+    const placeMenu = () => {
+        try {
+            const vh = viewportHeight();
+            if (!vh) return;
+            const anchorRect = anchor.getBoundingClientRect();
+            const formTop = formEl ? formEl.getBoundingClientRect().top : anchorRect.top;
+            const bottomLimit = Math.min(formTop, vh) - gap;
+            const topLimit = gap;
+            const available = Math.max(180, Math.floor(bottomLimit - topLimit));
+            const el = menu[0];
+            el.style.maxHeight = `${available}px`;
+            el.style.position = 'fixed';
+            el.style.bottom = ''; // 清空，避免叠加
+            el.style.top = `${Math.max(topLimit, bottomLimit - available)}px`;
+            const width = Math.min(el.getBoundingClientRect().width || 260, innerWidth - gap * 2);
+            el.style.width = `${width}px`;
+            const left = Math.max(gap, Math.min(anchorRect.left, innerWidth - width - gap));
+            el.style.left = `${left}px`;
+        } catch (_) { /* 定位失败交给 CSS */ }
+    };
+
+    // 不使用 Popper：自己定位可以稳定地贴住输入框顶部，
+    // 也不会受打包版 Popper 是否带 size modifier 的影响。
+    quickActionPopper = null;
+    placeMenu();
+    const reflowMenu = () => { placeMenu(); };
+    menu.data('reflowMenu', reflowMenu);
+    globalThis.visualViewport?.addEventListener?.('resize', reflowMenu);
+    $(window).on('resize.quickerApiMenuReflow', reflowMenu);
+
     const closeOnViewport = () => closeQuickActionMenu();
     $(document).on('pointerdown.quickerApiMenu', event => {
         if (!menu[0].contains(event.target) && !anchor.contains(event.target)) closeQuickActionMenu();
