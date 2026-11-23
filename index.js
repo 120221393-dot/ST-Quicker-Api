@@ -5509,6 +5509,88 @@ function openQuickModelMenu(anchor, placement) {
     let view = 'channels';
     let activeChannel = null;
 
+    // 把大量模型按家族分组，避免一条几百个名字的长列表。
+    // 只做「提取家族前缀」这一件事，规则保守、可预期：
+    //   claude-3-5-sonnet-20241022 → Claude 3.5 Sonnet
+    //   gpt-4o-mini                → GPT-4o
+    //   gemini-2.5-pro-exp         → Gemini 2.5
+    //   deepseek-chat / deepseek-r1 → DeepSeek
+    const modelFamily = model => {
+        const name = String(model || '').trim();
+        if (!name) return '其它';
+        const lower = name.toLowerCase();
+
+        // Anthropic：claude-3-5-sonnet-20241022 / claude-sonnet-4-20250514
+        const claude = lower.match(/^claude-(.+)$/);
+        if (claude) {
+            const rest = claude[1];
+            // 版本号（3-5 / 3 / 4）与系列名（sonnet/opus/haiku）顺序不固定，分别提取
+            const seriesMatch = rest.match(/(sonnet|opus|haiku)/);
+            const series = seriesMatch ? seriesMatch[1].replace(/^./, c => c.toUpperCase()) : '';
+            // 先去掉 8 位日期（20250514），剩下的数字才是版本号
+            const withoutDate = rest.replace(/\d{8}/g, '');
+            const versionMatch = withoutDate.match(/(\d+(?:[-.]\d+)?)/g);
+            let version = '';
+            if (versionMatch) {
+                // 版本号 = 第一段不含日期的数字；3-5 这种连写转成 3.5
+                version = versionMatch[0].replace(/-/g, '.');
+            }
+            const label = ['Claude', version, series].filter(Boolean).join(' ');
+            return label || 'Claude';
+        }
+
+        // OpenAI：gpt-4o-mini / gpt-4.1-turbo / o1-preview / o3-mini
+        const gpt = lower.match(/^(gpt-[\d.]+[a-z]?|o\d[a-z]*)/);
+        if (gpt) {
+            const raw = gpt[1];
+            // gpt-* 前缀大写、后缀小写（gpt-4o → GPT-4o）；o1/o3 保持小写
+            if (raw.startsWith('gpt')) {
+                return raw.replace(/^gpt/, 'GPT');
+            }
+            return raw;
+        }
+
+        // Google：gemini-2.5-pro / gemini-1.5-flash
+        const gemini = lower.match(/^gemini-([\d.]+)/);
+        if (gemini) return `Gemini ${gemini[1]}`;
+
+        // 通义：qwen2.5-72b / qwen-max
+        const qwen = lower.match(/^qwen-?([\d.]*)/);
+        if (qwen) return qwen[1] ? `Qwen ${qwen[1]}` : 'Qwen';
+
+        // 其它厂商：取第一个分隔符前的部分，首字母大写
+        const head = lower.split(/[-_/:]/)[0];
+        if (head && head.length <= 20) {
+            const pretty = { deepseek: 'DeepSeek', glm: 'GLM', llama: 'Llama', mistral: 'Mistral', moonshot: 'Moonshot', doubao: 'Doubao' };
+            return pretty[head] || head.replace(/^./, c => c.toUpperCase());
+        }
+        return '其它';
+    };
+
+    // 把模型列表整理成 [{ family, models }]，家族内保持原有顺序。
+    const groupByFamily = models => {
+        const order = [];
+        const buckets = new Map();
+        models.forEach(model => {
+            const family = modelFamily(model);
+            if (!buckets.has(family)) { buckets.set(family, []); order.push(family); }
+            buckets.get(family).push(model);
+        });
+        // 模型多的家族排前面，便于常用渠道优先露出
+        order.sort((a, b) => buckets.get(b).length - buckets.get(a).length || a.localeCompare(b));
+        const groups = order.map(family => ({ family, models: buckets.get(family) }));
+
+        // 组数太多时（比如每个家族只有一两个模型），把「独苗」家族合并，
+        // 否则十几条标题比平铺还乱。
+        if (groups.length <= 8) return groups;
+        const major = groups.filter(g => g.models.length >= 3);
+        const minor = groups.filter(g => g.models.length < 3);
+        if (!minor.length) return groups;
+        const merged = [];
+        minor.forEach(g => merged.push(...g.models));
+        return [...major, { family: '其它', models: merged }];
+    };
+
     const groupHeader = text => $('<li class="list-group-item ctx-header quicker-api__model-quick-group" role="presentation">').append($('<span>').text(text));
     const modelEntry = (model, owner) => {
         const isActive = Boolean(current) && model === current && owner && owner.id === activeProfileId;
@@ -5569,10 +5651,15 @@ function openQuickModelMenu(anchor, placement) {
             const favorites = normalizeModelList(activeChannel.availableModels || []);
             const fetched = profileFetchedModels(activeChannel);
             const base = activeChannel.id === activeProfileId ? [current, ...favorites, ...fetched] : [...favorites, ...fetched];
-            const models = [...new Set(base.filter(Boolean))]
-                .filter(model => matchesModelSearch(model, query))
-                .map(model => modelEntry(model, activeChannel));
-            append(models); modelCount = models.length;
+            const modelNames = [...new Set(base.filter(Boolean))]
+                .filter(model => matchesModelSearch(model, query));
+            modelCount = modelNames.length;
+            // 模型上百条时按家族分组，每组一个可折叠标题；组内保持原顺序。
+            const groups = groupByFamily(modelNames);
+            groups.forEach(({ family, models: familyModels }) => {
+                if (groups.length > 1) menu.append(groupHeader(`${family} · ${familyModels.length}`));
+                append(familyModels.map(model => modelEntry(model, activeChannel)));
+            });
             if (query && hasManagedModels(activeChannel.format) && !favorites.includes(query) && !fetched.includes(query)) {
                 menu.append(addEntry(activeChannel)); modelCount++;
             }
@@ -5619,10 +5706,15 @@ function openQuickModelMenu(anchor, placement) {
     //   上边界 = 视口顶部 + 间隙
     //   菜单 max-height = 下边界 - 上边界
     // 菜单用 fixed 定位贴住下边界向上生长，超出部分由 overflow-y:auto 滚动。
-    const formEl = anchor.closest('#send_form, .send_form, #form_sheld')
-        || document.getElementById('send_form')
-        || document.querySelector('.send_form');
     const gap = 8;
+    // 注意：leftSendForm 模式下 CPU 图标是插在左上角 #extensionsMenuButton
+    // 那一列里的，并不在底部输入框内。所以不能靠 anchor.closest 找输入框，
+    // 必须直接取底部发送栏 #send_form。取不到才退回 anchor 所在容器。
+    const resolveFormEl = () => document.getElementById('send_form')
+        || document.querySelector('#send_form, .send_form, #form_sheld')
+        || anchor.closest('#form_sheld, .send_form')
+        || null;
+    let formEl = resolveFormEl();
 
     const viewportHeight = () => (globalThis.visualViewport?.height || innerHeight || 0);
 
@@ -5630,6 +5722,7 @@ function openQuickModelMenu(anchor, placement) {
         try {
             const vh = viewportHeight();
             if (!vh) return;
+            formEl = resolveFormEl();
             const anchorRect = anchor.getBoundingClientRect();
             const formTop = formEl ? formEl.getBoundingClientRect().top : anchorRect.top;
             const bottomLimit = Math.min(formTop, vh) - gap;
