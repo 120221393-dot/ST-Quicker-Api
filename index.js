@@ -5425,9 +5425,17 @@ function enableTouchScroll(node) {
         moved = false;
         activeId = t.identifier;
     }, { passive: true });
+    // 不用展开运算符迭代 TouchList：部分 WebView 内核不支持其 Symbol.iterator，
+    // 会直接抛错导致整个 touchmove 处理器失效（表现为完全拖不动）。
+    const findTouch = list => {
+        for (let i = 0; i < list.length; i += 1) {
+            if (list[i].identifier === activeId) return list[i];
+        }
+        return list.length === 1 ? list[0] : null;
+    };
     node.addEventListener('touchmove', event => {
         if (activeId === null) return;
-        const t = [...event.touches].find(item => item.identifier === activeId);
+        const t = findTouch(event.touches);
         if (!t) return;
         const dy = t.clientY - startY;
         if (!moved && Math.abs(dy) > 5) moved = true;
@@ -5459,6 +5467,49 @@ function enableTouchScroll(node) {
     };
     node.addEventListener('touchend', end, { passive: true });
     node.addEventListener('touchcancel', end, { passive: true });
+    // 部分内核（如 TT/SillyDroid 的 WebView）触摸事件偶发不派发，
+    // 用 pointer 事件作为补充通道；touch 已处理时跳过，避免双重滚动。
+    let pointerActive = false;
+    node.addEventListener('pointerdown', event => {
+        if (event.pointerType === 'mouse' || activeId !== null) return;
+        pointerActive = true;
+        stop();
+        startY = lastY = event.clientY;
+        startTop = node.scrollTop;
+        lastT = event.timeStamp;
+        velocity = 0;
+        moved = false;
+    });
+    node.addEventListener('pointermove', event => {
+        if (!pointerActive || activeId !== null) return;
+        const dy = event.clientY - startY;
+        if (!moved && Math.abs(dy) > 5) moved = true;
+        if (!moved) return;
+        const dt = Math.max(1, event.timeStamp - lastT);
+        velocity = (event.clientY - lastY) / dt;
+        lastY = event.clientY;
+        lastT = event.timeStamp;
+        node.scrollTop = startTop - dy;
+    });
+    const endPointer = () => {
+        if (!pointerActive || activeId !== null) { pointerActive = false; return; }
+        pointerActive = false;
+        if (moved) {
+            let v = -velocity * 16;
+            const glide = () => {
+                if (Math.abs(v) < 0.5) return;
+                node.scrollTop += v;
+                v *= 0.94;
+                raf = requestAnimationFrame(glide);
+            };
+            if (Math.abs(v) > 1) raf = requestAnimationFrame(glide);
+            node.dataset.dragged = '1';
+            setTimeout(() => { delete node.dataset.dragged; }, 80);
+        }
+        moved = false;
+    };
+    node.addEventListener('pointerup', endPointer);
+    node.addEventListener('pointercancel', endPointer);
     node.addEventListener('click', event => {
         if (node.dataset.dragged) { event.stopPropagation(); event.preventDefault(); }
     }, true);
