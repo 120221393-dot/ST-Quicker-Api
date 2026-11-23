@@ -2181,6 +2181,14 @@ dialog.popup:has(.quicker-api__placement-popup) .popup-controls {
 /* 快速选择面板：固定头部 + 可滚动列表。
    头部（搜索框、返回、渠道名）永不滚动，只有下面的模型列表滚。 */
 .quicker-api__model-quick-panel {
+    position: fixed;
+    /* 必须 ≥ 旧版单层菜单的 10050：手机酒馆里 ST 的抽屉(3000)、
+       #movingDivs(4000)、toast 等都会盖住没有层级的 fixed 元素 */
+    z-index: 10050;
+    background: var(--SmartThemeBlurTintColor);
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px var(--SmartThemeShadowColor);
     display: flex;
     flex-direction: column;
     min-height: 0;

@@ -5770,11 +5770,16 @@ function openQuickModelMenu(anchor, placement) {
             // el 必须是外层 panel：头部和列表都在它里面。
             // 之前误用内层列表 menu[0]，panel 本身没定位，
             // 头部跟着 static 的 panel 落到文档末尾（屏幕外），看起来就是「窗口没了」。
+            // z-index 必须设在 panel 上：面板是 fixed 的 stacking context，
+            // 内层 <ul> 的 z-index 只在 panel 内部排序，救不了外层。
+            // 手机酒馆里 #left-nav-panel(3000)、#movingDivs(4000)、toast 等都会盖住
+            // 没有层级的 fixed 元素；旧版单层菜单靠 10050 压住它们，沿用同一值。
             const el = panel[0];
             el.style.display = 'flex';
             el.style.flexDirection = 'column';
             el.style.minHeight = '0';
             el.style.position = 'fixed';
+            el.style.zIndex = '10050';
             el.style.bottom = ''; // 清空，避免与 top 叠加
             el.style.overflow = 'hidden'; // 滚动交给内部列表，panel 本身不滚
 
