@@ -5792,16 +5792,30 @@ function openQuickModelMenu(anchor, placement) {
             el.style.top = `${Math.max(topLimit, bottomLimit - target)}px`;
 
             // 列表占满 panel 剩余高度，可滚动；头部不参与滚动，永远钉住。
+            // 必须全部内联覆盖：ST 的 .list-group 规则是
+            //   display:block; overflow:hidden; z-index:2000;
+            // 直接作用于头部和列表本身，会禁掉列表滚动、把头部高度算错。
             if (headEl) {
                 headEl.style.flex = '0 0 auto';
-                headEl.style.overflow = 'hidden';
+                headEl.style.flexShrink = '0';
+                headEl.style.display = 'block';
+                headEl.style.overflow = 'visible';
+                headEl.style.maxHeight = 'none';
+                headEl.style.minHeight = 'auto';
+                headEl.style.position = 'relative';
+                headEl.style.zIndex = '2';
             }
             if (listEl) {
                 listEl.style.flex = '1 1 auto';
+                listEl.style.flexShrink = '1';
+                listEl.style.display = 'block';
                 listEl.style.minHeight = '0';
                 listEl.style.overflowY = 'auto';
+                listEl.style.overflowX = 'hidden';
                 listEl.style.touchAction = 'pan-y';
                 listEl.style.webkitOverflowScrolling = 'touch';
+                listEl.style.position = 'relative';
+                listEl.style.zIndex = '1';
             }
             const width = Math.min(el.getBoundingClientRect().width || 260, innerWidth - gap * 2);
             el.style.width = `${width}px`;
