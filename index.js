@@ -5425,17 +5425,9 @@ function enableTouchScroll(node) {
         moved = false;
         activeId = t.identifier;
     }, { passive: true });
-    // 不用展开运算符迭代 TouchList：部分 WebView 内核不支持其 Symbol.iterator，
-    // 会直接抛错导致整个 touchmove 处理器失效（表现为完全拖不动）。
-    const findTouch = list => {
-        for (let i = 0; i < list.length; i += 1) {
-            if (list[i].identifier === activeId) return list[i];
-        }
-        return list.length === 1 ? list[0] : null;
-    };
     node.addEventListener('touchmove', event => {
         if (activeId === null) return;
-        const t = findTouch(event.touches);
+        const t = [...event.touches].find(item => item.identifier === activeId);
         if (!t) return;
         const dy = t.clientY - startY;
         if (!moved && Math.abs(dy) > 5) moved = true;
@@ -5467,49 +5459,6 @@ function enableTouchScroll(node) {
     };
     node.addEventListener('touchend', end, { passive: true });
     node.addEventListener('touchcancel', end, { passive: true });
-    // 部分内核（如 TT/SillyDroid 的 WebView）触摸事件偶发不派发，
-    // 用 pointer 事件作为补充通道；touch 已处理时跳过，避免双重滚动。
-    let pointerActive = false;
-    node.addEventListener('pointerdown', event => {
-        if (event.pointerType === 'mouse' || activeId !== null) return;
-        pointerActive = true;
-        stop();
-        startY = lastY = event.clientY;
-        startTop = node.scrollTop;
-        lastT = event.timeStamp;
-        velocity = 0;
-        moved = false;
-    });
-    node.addEventListener('pointermove', event => {
-        if (!pointerActive || activeId !== null) return;
-        const dy = event.clientY - startY;
-        if (!moved && Math.abs(dy) > 5) moved = true;
-        if (!moved) return;
-        const dt = Math.max(1, event.timeStamp - lastT);
-        velocity = (event.clientY - lastY) / dt;
-        lastY = event.clientY;
-        lastT = event.timeStamp;
-        node.scrollTop = startTop - dy;
-    });
-    const endPointer = () => {
-        if (!pointerActive || activeId !== null) { pointerActive = false; return; }
-        pointerActive = false;
-        if (moved) {
-            let v = -velocity * 16;
-            const glide = () => {
-                if (Math.abs(v) < 0.5) return;
-                node.scrollTop += v;
-                v *= 0.94;
-                raf = requestAnimationFrame(glide);
-            };
-            if (Math.abs(v) > 1) raf = requestAnimationFrame(glide);
-            node.dataset.dragged = '1';
-            setTimeout(() => { delete node.dataset.dragged; }, 80);
-        }
-        moved = false;
-    };
-    node.addEventListener('pointerup', endPointer);
-    node.addEventListener('pointercancel', endPointer);
     node.addEventListener('click', event => {
         if (node.dataset.dragged) { event.stopPropagation(); event.preventDefault(); }
     }, true);
@@ -5529,24 +5478,6 @@ function closeQuickActionMenu() {
 // the live model plus the current channel's favorites/fetched models, followed
 // by every other channel's favorites (picking one applies that channel too).
 function openQuickModelMenu(anchor, placement) {
-    // 手机端（SillyDroid/TT 内核）出问题时用户看不到控制台，
-    // 这里把异常直接弹到屏幕上，避免「点了没反应」无从排查。
-    try {
-        openQuickModelMenuInner(anchor, placement);
-    } catch (error) {
-        console.error('[api快捷工具] 打开模型菜单失败', error);
-        try {
-            const box = document.createElement('div');
-            box.style.cssText = 'position:fixed;left:8px;right:8px;bottom:8px;z-index:99999;background:#2a1d1d;color:#ffb4b4;border:1px solid #a33;border-radius:10px;padding:10px 12px;font:12px/1.5 monospace;white-space:pre-wrap;max-height:40vh;overflow:auto';
-            box.textContent = `模型菜单打开失败：\n${error && error.message ? error.message : error}\n\n${(error && error.stack ? String(error.stack).split('\n').slice(0, 4).join('\n') : '')}`;
-            box.addEventListener('click', () => box.remove());
-            document.body.appendChild(box);
-            setTimeout(() => box.remove(), 15000);
-        } catch (_) { /* 兜底提示失败就放弃 */ }
-    }
-}
-
-function openQuickModelMenuInner(anchor, placement) {
     if (quickActionMenu?.data('anchor') === anchor) return closeQuickActionMenu();
     closeQuickActionMenu();
     const profile = selectedProfile() || profiles().find(item => item.id === settings().activeProfileId) || null;
@@ -5607,7 +5538,7 @@ function openQuickModelMenuInner(anchor, placement) {
                 ),
                 $('<div class="quicker-api__quick-menu-params fa-solid fa-chevron-right" title="查看该渠道的模型">'),
             )
-            .on('click', () => { view = 'models'; activeChannel = channel; searchInput.val(''); render(); if (!globalThis.matchMedia?.('(pointer: coarse)').matches) searchInput.trigger('focus'); });
+            .on('click', () => { view = 'models'; activeChannel = channel; searchInput.val(''); render(); });
     };
     const backEntry = () => $('<li class="list-group-item ctx-item quicker-api__model-quick-back" role="listitem" tabindex="0" data-quicker-api-actionable="true">')
         .append(
@@ -5615,44 +5546,6 @@ function openQuickModelMenuInner(anchor, placement) {
             $('<div class="qr--button-label">').text('返回渠道列表'),
         )
         .on('click', () => { view = 'channels'; activeChannel = null; searchInput.val(''); render(); });
-
-    // 模型可达数百条，必须限制菜单高度并让它内部滚动，否则会顶出屏幕。
-    // 不依赖 Popper 的 size modifier（ST 内置的旧版可能没有），自己按
-    // 锚点位置与视口高度算：锚点在上半屏→向下展开；下半屏→向上展开。
-    const fitToViewport = () => {
-        // 防御：任何测量异常都不应该让菜单打不开（宁可高度不限也不要抛错中断）。
-        try {
-            fitToViewportUnsafe();
-        } catch (error) {
-            console.warn('[api快捷工具] 计算菜单高度失败，回退到 CSS 高度', error);
-        }
-    };
-    const fitToViewportUnsafe = () => {
-        const rect = anchor.getBoundingClientRect();
-        const gap = 8;
-        const vh = (globalThis.visualViewport?.height || innerHeight) || 800;
-        const vw = (globalThis.visualViewport?.width || innerWidth) || 400;
-        const above = rect.top - gap * 2;
-        const below = vh - rect.bottom - gap * 2;
-        // 优先放在空间更大的一侧，但要保证至少能露出 8 行左右。
-        const placeAbove = placement === 'leftSendForm' ? true : above >= below;
-        const space = Math.max(160, placeAbove ? above : below);
-        menu[0].style.maxHeight = `${space}px`;
-        if (!quickActionPopper) {
-            const width = Math.min(menu[0].getBoundingClientRect().width || 260, vw - gap * 2);
-            const left = Math.max(gap, Math.min(rect.left, vw - width - gap));
-            menu.css({
-                position: 'fixed',
-                left: `${left}px`,
-                top: placeAbove ? '' : `${rect.bottom + gap}px`,
-                bottom: placeAbove ? `${vh - rect.top + gap}px` : '',
-                width: `${width}px`,
-            });
-        }
-    };
-    fitToViewport();
-    quickActionPopper?.update?.();
-    const closeOnViewport = () => closeQuickActionMenu();
 
     const render = () => {
         const query = normalizeText(searchInput.val());
@@ -5669,10 +5562,6 @@ function openQuickModelMenuInner(anchor, placement) {
         // Second level: the model catalog of the chosen channel.
         if (view === 'models' && activeChannel) {
             menu.append(backEntry());
-            // 切到模型视图后条目数量差异极大，重新按当前视口算一次高度
-            fitToViewport();
-            quickActionPopper?.update?.();
-            menu[0].scrollTop = 0;
             menu.append(groupHeader(activeChannel.name));
             let modelCount = 0;
             const favorites = normalizeModelList(activeChannel.availableModels || []);
@@ -5686,7 +5575,6 @@ function openQuickModelMenuInner(anchor, placement) {
                 menu.append(addEntry(activeChannel)); modelCount++;
             }
             if (!modelCount) menu.append(emptyEntry('该渠道暂无模型；输入 ID 回车即可添加'));
-            else if (modelCount > 8) menu.append(emptyEntry(`共 ${modelCount} 个模型 · 可滚动或搜索筛选`));
             return;
         }
 
@@ -5724,22 +5612,17 @@ function openQuickModelMenuInner(anchor, placement) {
     });
     quickActionPopper = globalThis.Popper?.createPopper?.(anchor, menu[0], {
         placement: placement === 'qrButtons' ? 'bottom-start' : placement === 'leftSendForm' ? 'top-start' : 'top-end',
-        strategy: 'fixed',
         modifiers: [
             { name: 'offset', options: { offset: [0, 8] } },
             { name: 'preventOverflow', options: { padding: 8 } },
-            // 模型可达数百条：由 Popper 按锚点可用空间反算高度上限，
-            // 保证菜单永远完整落在视口内，且内部可滚动。
             { name: 'computeStyles', options: { gpuAcceleration: false } },
         ],
     }) || null;
-    // 键盘弹出/收起会改变可视高度 → 重算高度，不关闭菜单。
-    // visualViewport 的 resize 在手机上极其频繁（软键盘、地址栏伸缩都会触发），
-    // 之前把它接到 closeOnViewport 上，导致菜单刚打开就被自身布局变化关掉，
-    // 表现成「点 CPU 图标没反应」。
-    const refit = () => { fitToViewport(); quickActionPopper?.update?.(); };
-    globalThis.visualViewport?.addEventListener?.('resize', refit);
-    menu.data('refitResize', refit);
+    if (!quickActionPopper) {
+        const rect = anchor.getBoundingClientRect();
+        menu.css({ position: 'fixed', left: `${Math.max(8, Math.min(rect.left, innerWidth - menu.outerWidth() - 8))}px`, top: `${Math.max(8, rect.top - menu.outerHeight() - 8)}px` });
+    }
+    const closeOnViewport = () => closeQuickActionMenu();
     $(document).on('pointerdown.quickerApiMenu', event => {
         if (!menu[0].contains(event.target) && !anchor.contains(event.target)) closeQuickActionMenu();
     }).on('focusin.quickerApiMenu', event => {
@@ -5748,10 +5631,8 @@ function openQuickModelMenuInner(anchor, placement) {
         if (event.key === 'Escape') { event.preventDefault(); closeQuickActionMenu(); anchor.focus?.(); }
         if (event.key === 'Tab') closeQuickActionMenu();
     });
-    // 只保留 blur（切走应用时收起）。resize/scroll 不关菜单：
-    // 手机端打开浮层时浏览器会为了让锚点可见而滚动页面，
-    // 一旦监听 scroll 就会「刚打开就被自己关掉」，表现成点击没反应。
-    $(window).on('blur.quickerApiMenu', closeOnViewport);
+    $(window).on('resize.quickerApiMenu scroll.quickerApiMenu blur.quickerApiMenu', closeOnViewport);
+    $(globalThis.visualViewport).on('resize.quickerApiMenu scroll.quickerApiMenu', closeOnViewport);
     enableTouchScroll(menu[0]);
     if (!globalThis.matchMedia?.('(pointer: coarse)').matches) searchInput.trigger('focus');
 }
@@ -5760,58 +5641,11 @@ function makeQuickActionEntry(id, placement) {
     const entry = placement !== 'qrButtons'
         ? $('<div class="quicker-api__quick-entry fa-solid fa-microchip interactable" role="button" tabindex="0" aria-label="api快捷工具 模型快速选择" title="api快捷工具 模型快速选择"></div>')
         : $('<button type="button" class="qr--button quicker-api__quick-entry" aria-label="api快捷工具 模型快速选择" title="api快捷工具 模型快速选择"><i class="fa-solid fa-microchip"></i><span>api快捷工具</span></button>');
-    // 点击/回车统一走 document 级委托（见 bindQuickActionEntryDelegates）。
-    // 早期版本把处理器直接绑在元素上，扩展热重载后 DOM 里的旧元素
-    // 会带着失效闭包继续存在，表现为「点 CPU 图标没反应」。
     return entry.attr('id', id)
-        .attr('data-quicker-api-placement', placement);
-}
-
-// 轻量调试提示：手机端没有控制台，用屏幕上的小胶囊确认代码路径是否被走到。
-function flashDebugChip(text) {
-    try {
-        const id = 'quicker-api-debug-chip';
-        document.getElementById(id)?.remove();
-        const chip = document.createElement('div');
-        chip.id = id;
-        chip.textContent = text;
-        chip.style.cssText = 'position:fixed;left:50%;top:12px;transform:translateX(-50%);z-index:2147483647;'
-            + 'background:rgba(20,20,24,.92);color:#9ae6b4;border:1px solid #2f6f4f;border-radius:999px;'
-            + 'padding:4px 12px;font:12px/1.4 monospace;pointer-events:none;opacity:1;transition:opacity .4s';
-        document.body.appendChild(chip);
-        setTimeout(() => { chip.style.opacity = '0'; }, 1200);
-        setTimeout(() => chip.remove(), 1700);
-    } catch (_) { /* 调试提示失败不影响主流程 */ }
-}
-
-let quickActionEntryDelegatesBound = false;
-function bindQuickActionEntryDelegates() {
-    if (quickActionEntryDelegatesBound) return;
-    quickActionEntryDelegatesBound = true;
-    // 用原生捕获阶段监听：不依赖 jQuery 委托，也不怕 ST 在冒泡途中
-    // 调 stopPropagation（SillyDroid 打包版上就因此点不动）。
-    const ENTRY_SELECTOR = '.quicker-api__quick-entry';
-    const handleEntry = target => {
-        const el = target?.closest?.(ENTRY_SELECTOR);
-        if (!el) return false;
-        const placement = normalizeQuickActionPlacement(el.getAttribute('data-quicker-api-placement'));
-        // 命中即留痕：即便后续渲染失败，也能确认「点击确实传进来了」。
-        flashDebugChip(`点击已命中 · ${placement}`);
-        openQuickModelMenu(el, placement);
-        return true;
-    };
-    document.addEventListener('click', event => {
-        if (!handleEntry(event.target)) return;
-        event.stopPropagation();
-        event.preventDefault();
-    }, true);
-    document.addEventListener('keydown', event => {
-        if (event.key !== 'Enter' && event.key !== ' ') return;
-        if (handleEntry(event.target)) {
-            event.stopPropagation();
-            event.preventDefault();
-        }
-    }, true);
+        .on('click.quickerApi', event => { event.stopPropagation(); openQuickModelMenu(event.currentTarget, placement); })
+        .on('keydown.quickerApi', event => {
+            if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openQuickModelMenu(event.currentTarget, placement); }
+        });
 }
 
 function activeQuickReplyButtonContainer() {
@@ -5822,7 +5656,6 @@ function activeQuickReplyButtonContainer() {
 
 function ensureQuickActionEntries() {
     if (extensionDisabled || teardownPending) return;
-    bindQuickActionEntryDelegates();
     const placement = normalizeQuickActionPlacement(settings().quickActionPlacement);
     if (placement === 'disabled') {
         $('#quicker_api_quick_left, #quicker_api_quick_right, [data-quicker-api-qr-entry]').remove();
@@ -5831,10 +5664,6 @@ function ensureQuickActionEntries() {
     }
     if (placement === 'leftSendForm') {
         $('#quicker_api_quick_right, [data-quicker-api-qr-entry]').remove();
-        // 旧版本遗留的入口可能缺少 data-quicker-api-placement，导致委托拿不到
-        // 正确 placement（甚至被 normalize 成别的值）。缺属性就重建。
-        const legacy = document.getElementById('quicker_api_quick_left');
-        if (legacy && !legacy.getAttribute('data-quicker-api-placement')) legacy.remove();
         if (!document.getElementById('quicker_api_quick_left')) {
             const extensionsButton = document.getElementById('extensionsMenuButton');
             if (!extensionsButton?.parentElement) return;
@@ -5844,8 +5673,6 @@ function ensureQuickActionEntries() {
     }
     if (placement === 'rightSendForm') {
         $('#quicker_api_quick_left, [data-quicker-api-qr-entry]').remove();
-        const legacyRight = document.getElementById('quicker_api_quick_right');
-        if (legacyRight && !legacyRight.getAttribute('data-quicker-api-placement')) legacyRight.remove();
         if (!document.getElementById('quicker_api_quick_right')) {
             const sendButton = document.getElementById('send_but');
             const entry = makeQuickActionEntry('quicker_api_quick_right', placement)[0];

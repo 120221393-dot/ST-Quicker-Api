@@ -1088,10 +1088,11 @@ dialog.popup:has(.quicker-api__model-manager) .popup-controls .menu_button:focus
     min-width: 9rem;
     max-width: min(18rem, calc(100vw - 1rem));
     /* dvh 跟随移动端地址栏收起/展开，避免菜单被地址栏遮住底部。
-       原固定 28rem 在手机上只能露出 9 条，用户会误以为「只显示了前几个」。
-       桌面端保留 36rem 上限避免过高；触屏设备直接吃满视口高度。 */
-    max-height: min(36rem, calc(100vh - 2rem));
-    max-height: min(36rem, calc(100dvh - 2rem));
+       原来是固定的 28rem（448px），手机上只够显示 9 行左右，
+       模型上百条的渠道看起来就像「只显示了前面几个」。
+       改为直接吃满视口高度，具体上下边界交给 Popper 的 preventOverflow。 */
+    max-height: calc(100vh - 1rem);
+    max-height: calc(100dvh - 1rem);
     margin: 0;
     overflow-x: hidden;
     overflow-y: auto;
@@ -1100,11 +1101,6 @@ dialog.popup:has(.quicker-api__model-manager) .popup-controls .menu_button:focus
     /* ST 移动端给 body 设了 touch-action:none，浮层不在其滚动元素内，
        必须显式恢复纵向平移手势，否则手指滑动无效。 */
     touch-action: pan-y !important;
-    /* 手机 WebView 默认隐藏滚动条，模型上百条时会误以为「只有前几个」。
-       常驻一条细滚动条给出「下面还有」的可见提示。 */
-    scrollbar-width: thin;
-    scrollbar-color: var(--SmartThemeQuoteColor) transparent;
-    scrollbar-gutter: stable;
     padding: 0;
     background: var(--SmartThemeBlurTintColor);
     color: var(--SmartThemeBodyColor);
@@ -1112,29 +1108,6 @@ dialog.popup:has(.quicker-api__model-manager) .popup-controls .menu_button:focus
     filter: none !important;
     list-style: none;
     transition: none !important;
-}
-
-/* 触屏/移动端：模型列表直接占满可用视口，避免长列表被固定上限截断。 */
-@media (pointer: coarse), (max-width: 48rem) {
-    .quicker-api__quick-menu {
-        max-height: calc(100vh - 2rem);
-        max-height: calc(100dvh - 2rem);
-    }
-}
-
-/* WebKit/Blink 内核的常驻滚动条（安卓 WebView 走这条）。 */
-.quicker-api__quick-menu::-webkit-scrollbar {
-    width: 6px;
-}
-
-.quicker-api__quick-menu::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.quicker-api__quick-menu::-webkit-scrollbar-thumb {
-    background: var(--SmartThemeQuoteColor);
-    border-radius: 3px;
-    opacity: 0.5;
 }
 
 /* 关键：禁止 flex 压缩，否则所有模型项会挤成一团且无法滚动。 */
