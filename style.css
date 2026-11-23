@@ -1081,14 +1081,20 @@ dialog.popup:has(.quicker-api__model-manager) .popup-controls .menu_button:focus
 
 .quicker-api__quick-menu {
     z-index: 10050;
+    /* ST 把 .list-group 设为 flex column 且 overflow:hidden，子项会被压扁；这里显式声明并允许纵向滚动。 */
+    display: flex;
+    flex-direction: column;
     width: max-content;
     min-width: 9rem;
     max-width: min(18rem, calc(100vw - 1rem));
+    /* dvh 跟随移动端地址栏收起/展开，避免菜单被地址栏遮住底部。 */
     max-height: min(28rem, calc(100vh - 1rem));
+    max-height: min(28rem, calc(100dvh - 1rem));
     margin: 0;
     overflow-x: hidden;
     overflow-y: auto;
     overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
     padding: 0;
     background: var(--SmartThemeBlurTintColor);
     color: var(--SmartThemeBodyColor);
@@ -1098,7 +1104,9 @@ dialog.popup:has(.quicker-api__model-manager) .popup-controls .menu_button:focus
     transition: none !important;
 }
 
+/* 关键：禁止 flex 压缩，否则所有模型项会挤成一团且无法滚动。 */
 .quicker-api__quick-menu > .list-group-item {
+    flex: 0 0 auto;
     display: flex;
     min-width: 0;
     align-items: center;
@@ -2135,6 +2143,7 @@ dialog.popup:has(.quicker-api__placement-popup) .popup-controls {
 }
 
 .quicker-api__model-quick-search {
+    flex: 0 0 auto;
     position: sticky;
     top: 0;
     z-index: 1;
@@ -2147,6 +2156,7 @@ dialog.popup:has(.quicker-api__placement-popup) .popup-controls {
 }
 
 .quicker-api__model-quick-group {
+    flex: 0 0 auto;
     padding-top: 8px !important;
     padding-bottom: 2px !important;
     font-weight: 700;
