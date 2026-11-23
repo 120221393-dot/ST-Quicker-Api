@@ -1727,6 +1727,7 @@ function renderModelPickerOptions(host = currentModelPickerHost()) {
         $(tab).toggleClass('is-active', active).attr('aria-selected', String(active)).find('small').text(count);
     });
     const list = picker.find('.quicker-api__model-options').empty();
+    enableTouchScroll(list[0]);
     if (view === 'formats') return renderFormatGroups(picker, list, data, query);
     const favorites = new Set(data.favorites);
     const base = view === 'favorites' ? data.favorites : data.all;
@@ -3099,6 +3100,7 @@ function openQuickUrlMenu() {
     });
     quickUrlPortal = $('<div class="quicker-api__quick-url-portal openDrawer pinnedOpen">').appendTo(document.body);
     quickUrlMenu = menu.appendTo(quickUrlPortal);
+    enableTouchScroll(quickUrlMenu[0]);
     $('#quicker_api_quick_url').attr('aria-expanded', 'true');
     positionQuickUrlMenu();
     $(document)
@@ -5403,6 +5405,65 @@ function queueQuickAction(action) {
     return quickActionQueue;
 }
 
+// ST 移动端在 body 上设 touch-action:none，该属性沿祖先链取交集，
+// 任何挂在 body 下的浮层都无法用原生手势滚动。这里手动接管纵向拖动：
+// 支持惯性续滑，并在拖动后吞掉浏览器补发的 click，避免误触选项。
+function enableTouchScroll(node) {
+    if (!node || node.dataset.touchScrollBound) return;
+    node.dataset.touchScrollBound = '1';
+    let startY = 0, startTop = 0, lastY = 0, lastT = 0, velocity = 0;
+    let moved = false, activeId = null, raf = 0;
+    const stop = () => { if (raf) cancelAnimationFrame(raf); raf = 0; };
+    node.addEventListener('touchstart', event => {
+        if (event.touches.length !== 1) return;
+        stop();
+        const t = event.touches[0];
+        startY = lastY = t.clientY;
+        startTop = node.scrollTop;
+        lastT = event.timeStamp;
+        velocity = 0;
+        moved = false;
+        activeId = t.identifier;
+    }, { passive: true });
+    node.addEventListener('touchmove', event => {
+        if (activeId === null) return;
+        const t = [...event.touches].find(item => item.identifier === activeId);
+        if (!t) return;
+        const dy = t.clientY - startY;
+        if (!moved && Math.abs(dy) > 5) moved = true;
+        if (!moved) return;
+        if (event.cancelable) event.preventDefault();
+        const dt = Math.max(1, event.timeStamp - lastT);
+        velocity = (t.clientY - lastY) / dt;
+        lastY = t.clientY;
+        lastT = event.timeStamp;
+        node.scrollTop = startTop - dy;
+    }, { passive: false });
+    const end = () => {
+        if (activeId === null) return;
+        activeId = null;
+        if (moved) {
+            // 松手后按最后速度继续滑一小段，贴近原生惯性手感。
+            let v = -velocity * 16;
+            const glide = () => {
+                if (Math.abs(v) < 0.5) return;
+                node.scrollTop += v;
+                v *= 0.94;
+                raf = requestAnimationFrame(glide);
+            };
+            if (Math.abs(v) > 1) raf = requestAnimationFrame(glide);
+            node.dataset.dragged = '1';
+            setTimeout(() => { delete node.dataset.dragged; }, 80);
+        }
+        moved = false;
+    };
+    node.addEventListener('touchend', end, { passive: true });
+    node.addEventListener('touchcancel', end, { passive: true });
+    node.addEventListener('click', event => {
+        if (node.dataset.dragged) { event.stopPropagation(); event.preventDefault(); }
+    }, true);
+}
+
 function closeQuickActionMenu() {
     quickActionPopper?.destroy?.();
     quickActionPopper = null;
@@ -5572,6 +5633,7 @@ function openQuickModelMenu(anchor, placement) {
     });
     $(window).on('resize.quickerApiMenu scroll.quickerApiMenu blur.quickerApiMenu', closeOnViewport);
     $(globalThis.visualViewport).on('resize.quickerApiMenu scroll.quickerApiMenu', closeOnViewport);
+    enableTouchScroll(menu[0]);
     if (!globalThis.matchMedia?.('(pointer: coarse)').matches) searchInput.trigger('focus');
 }
 

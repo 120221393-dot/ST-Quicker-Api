@@ -1095,6 +1095,9 @@ dialog.popup:has(.quicker-api__model-manager) .popup-controls .menu_button:focus
     overflow-y: auto;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
+    /* ST 移动端给 body 设了 touch-action:none，浮层不在其滚动元素内，
+       必须显式恢复纵向平移手势，否则手指滑动无效。 */
+    touch-action: pan-y !important;
     padding: 0;
     background: var(--SmartThemeBlurTintColor);
     color: var(--SmartThemeBodyColor);
