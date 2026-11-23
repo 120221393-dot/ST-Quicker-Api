@@ -2178,6 +2178,31 @@ dialog.popup:has(.quicker-api__placement-popup) .popup-controls {
     white-space: normal;
 }
 
+/* 快速选择面板：固定头部 + 可滚动列表。
+   头部（搜索框、返回、渠道名）永不滚动，只有下面的模型列表滚。 */
+.quicker-api__model-quick-panel {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.quicker-api__model-quick-head {
+    flex: 0 0 auto;
+    overflow: hidden;
+    margin: 0;
+}
+
+.quicker-api__model-quick-menu {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    margin: 0;
+}
+
 /* 原生模型选择器（对齐 API 专页的模型选择栏）。
    用系统控件渲染，长列表的滚动与分组交给浏览器，避免自绘浮层
    在手机 WebView 上滚不动、定位错位的问题。 */

@@ -172,6 +172,8 @@ let quickActionTransaction = 0;
 let quickActionBlockingToken = 0;
 let quickPresetWaitCancel = null;
 let quickActionMenu = null;
+let quickActionHead = null;
+let quickActionList = null;
 let quickActionPopper = null;
 let quickActionPlacementPopup = null;
 let quickActionObserver = null;
@@ -5493,8 +5495,16 @@ function openQuickModelMenu(anchor, placement) {
     const activeProfileId = settings().activeProfileId;
     const liveFormatName = findFormatForCurrentSource() || (profile && liveFormat(profile)) || normalizeFormat($('#quicker_api_format').val());
     const current = liveFormatName ? nativeModelFor(liveFormatName) : getEditorModel();
-    const menu = $('<ul class="list-group ctx-menu quicker-api__quick-menu quicker-api__model-quick-menu" role="list" tabindex="-1">').data('anchor', anchor).appendTo(document.body);
-    quickActionMenu = menu;
+    // 面板拆成「固定头部 + 可滚动列表」两段：
+    // 头部（搜索框、当前渠道名、返回按钮）始终钉在顶部，不随模型列表滚动。
+    const panel = $('<div class="quicker-api__model-quick-panel" role="dialog" aria-label="快速切换模型">')
+        .data('anchor', anchor)
+        .appendTo(document.body);
+    const headMenu = $('<ul class="list-group ctx-menu quicker-api__quick-menu quicker-api__model-quick-head" role="presentation">').appendTo(panel);
+    const menu = $('<ul class="list-group ctx-menu quicker-api__quick-menu quicker-api__model-quick-menu" role="list" tabindex="-1">').appendTo(panel);
+    quickActionMenu = panel;
+    quickActionHead = headMenu;
+    quickActionList = menu;
     const manageItem = $('<li class="list-group-item ctx-header quicker-api__quick-manage" role="listitem" tabindex="0" data-quicker-api-actionable="true" title="搭配方案：把模型与预设绑定在一起">')
         .append(
             $('<div class="qr--button-icon fa-solid fa-link">'),
@@ -5505,10 +5515,10 @@ function openQuickModelMenu(anchor, placement) {
             $('<div class="quicker-api__quick-menu-params">').text('搭配方案'),
         )
         .on('click', () => { closeQuickActionMenu(); void manageQuickActions(); });
-    menu.append(manageItem);
+    headMenu.append(manageItem);
     const searchInput = $('<input class="text_pole quicker-api__model-quick-search-input" type="search" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="搜索模型或输入新模型 ID" aria-label="搜索模型">');
     const searchItem = $('<li class="list-group-item quicker-api__model-quick-search" role="presentation">').append(searchInput);
-    menu.append(searchItem);
+    headMenu.append(searchItem);
 
     // Two-level navigation: a channel list first, then the models of one
     // channel. `view` is 'channels' or 'models'; `activeChannel` is the channel
@@ -5640,7 +5650,10 @@ function openQuickModelMenu(anchor, placement) {
 
     const render = () => {
         const query = normalizeText(searchInput.val());
+        // 头部的动态部分（返回按钮 / 渠道名）每次重建，直接挂在 headMenu 下
         searchItem.nextAll().remove();
+        // 滚动区每次重建
+        menu.empty();
         const append = entries => { for (const entry of entries) menu.append(entry); };
         const addEntry = profileForAdd => $('<li class="list-group-item ctx-item quicker-api__model-quick-add" role="listitem" tabindex="0" data-quicker-api-actionable="true">')
             .append($('<div class="qr--button-icon fa-solid fa-plus">'), $('<div class="qr--button-label">').text(`收藏并使用“${query}”`))
@@ -5652,8 +5665,8 @@ function openQuickModelMenu(anchor, placement) {
 
         // Second level: the model catalog of the chosen channel.
         if (view === 'models' && activeChannel) {
-            menu.append(backEntry());
-            menu.append(groupHeader(activeChannel.name));
+            // 返回按钮与渠道名固定在上方，不随模型列表滚动
+            headMenu.append(backEntry(), groupHeader(activeChannel.name));
             const favorites = normalizeModelList(activeChannel.availableModels || []);
             const fetched = profileFetchedModels(activeChannel);
             const base = activeChannel.id === activeProfileId ? [current, ...favorites, ...fetched] : [...favorites, ...fetched];
@@ -5722,7 +5735,7 @@ function openQuickModelMenu(anchor, placement) {
     const gap = 8;
     // 菜单在内容高度基础上额外往上扩展的行数（实测单行 ~29px），
     // 让整块面板更宽松，接近满屏上沿。
-    const EXTRA_ROWS = 6;
+    const EXTRA_ROWS = 11;
     const EXTRA_ROW_PX = 29;
     const extraHeight = EXTRA_ROWS * EXTRA_ROW_PX;
     // 注意：leftSendForm 模式下 CPU 图标是插在左上角 #extensionsMenuButton
@@ -5746,19 +5759,29 @@ function openQuickModelMenu(anchor, placement) {
             const bottomLimit = Math.min(formTop, vh) - gap;
             const topLimit = gap;
             const available = Math.max(180, Math.floor(bottomLimit - topLimit));
+            // el 是外层 panel（固定头部 + 滚动列表），只有列表滚动。
+            // display/flex 直接写在 JS 里：ST 的 .ctx-menu 类会覆盖外部样式表，
+            // 只靠 CSS 的话 panel 会退化成 block，子元素撑破容器。
             const el = menu[0];
-            el.style.maxHeight = `${available}px`;
+            el.style.display = 'flex';
+            el.style.flexDirection = 'column';
+            el.style.minHeight = '0';
             el.style.position = 'fixed';
             el.style.bottom = ''; // 清空，避免与 top 叠加
-            el.style.top = `${topLimit}px`;
+            el.style.overflow = 'hidden'; // 滚动交给内部列表，panel 本身不滚
 
-            // 高度必须按「未受 maxHeight 限制」的内容高度来算：
-            // 先临时放开高度量 scrollHeight，再恢复上限。
-            // 否则量到的是被截断的旧值，菜单要么飘到顶部、要么高度不足无法滚到末尾。
-            const prevMax = el.style.maxHeight;
-            el.style.maxHeight = 'none';
-            const natural = Math.min(el.scrollHeight || available, available);
-            el.style.maxHeight = prevMax;
+            // 按「未受限」的内容高度来算：头部高度 + 列表内容高度。
+            const listEl = quickActionList?.[0];
+            const headEl = quickActionHead?.[0];
+            const headH = headEl ? headEl.scrollHeight : 0;
+            let listH = 0;
+            if (listEl) {
+                const prevListMax = listEl.style.maxHeight;
+                listEl.style.maxHeight = 'none';
+                listH = listEl.scrollHeight;
+                listEl.style.maxHeight = prevListMax;
+            }
+            const natural = Math.min(headH + listH, available);
 
             // 内容短：贴住输入框底边；内容长：撑满可用高度并贴顶。
             // 额外往上扩展 EXTRA_ROWS 行——注意 max-height 只是上限，不会把
@@ -5768,11 +5791,18 @@ function openQuickModelMenu(anchor, placement) {
             el.style.maxHeight = `${target}px`;
             el.style.top = `${Math.max(topLimit, bottomLimit - target)}px`;
 
-            // 关键：显式给出行高可算的滚动容器属性，WebView 里
-            // 缺少 min-height:0 / -webkit-overflow-scrolling 时不跟手。
-            el.style.overflowY = 'auto';
-            el.style.touchAction = 'pan-y';
-            el.style.webkitOverflowScrolling = 'touch';
+            // 列表占满 panel 剩余高度，可滚动；头部不参与滚动，永远钉住。
+            if (headEl) {
+                headEl.style.flex = '0 0 auto';
+                headEl.style.overflow = 'hidden';
+            }
+            if (listEl) {
+                listEl.style.flex = '1 1 auto';
+                listEl.style.minHeight = '0';
+                listEl.style.overflowY = 'auto';
+                listEl.style.touchAction = 'pan-y';
+                listEl.style.webkitOverflowScrolling = 'touch';
+            }
             const width = Math.min(el.getBoundingClientRect().width || 260, innerWidth - gap * 2);
             el.style.width = `${width}px`;
             const left = Math.max(gap, Math.min(anchorRect.left, innerWidth - width - gap));
@@ -5802,8 +5832,9 @@ function openQuickModelMenu(anchor, placement) {
     // 菜单内滚动由 enableTouchScroll() 接管：它自己在 touchmove 里
     // preventDefault 并手动设置 scrollTop，已经阻止了手势穿透到外层页面。
     // 这里只额外拦一下滚轮事件，避免桌面/鼠标滚轮把页面一起滚走。
-    menu[0].addEventListener('wheel', event => {
-        const el = menu[0];
+    const listNode = quickActionList?.[0] || menu[0];
+    listNode.addEventListener('wheel', event => {
+        const el = listNode;
         const atTop = el.scrollTop <= 0;
         const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 1;
         if ((atTop && event.deltaY < 0) || (atBottom && event.deltaY > 0)) event.preventDefault();
@@ -5827,7 +5858,7 @@ function openQuickModelMenu(anchor, placement) {
         if (event.key === 'Escape') { event.preventDefault(); closeQuickActionMenu(); anchor.focus?.(); }
         if (event.key === 'Tab') closeQuickActionMenu();
     });
-    enableTouchScroll(menu[0]);
+    enableTouchScroll(listNode);
     if (!globalThis.matchMedia?.('(pointer: coarse)').matches) searchInput.trigger('focus');
 }
 
