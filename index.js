@@ -5591,6 +5591,56 @@ function openQuickModelMenu(anchor, placement) {
         return [...major, { family: '其它', models: merged }];
     };
 
+    // 原生模型选择器：复刻 API 专页「模型选择栏」的做法——<select> + <optgroup>。
+    // 手机端由系统渲染全屏列表，滚动/分组/长列表全部不用自己操心。
+    const nativeModelPicker = (profile, modelNames) => {
+        const currentModel = current || '';
+        const select = document.createElement('select');
+        select.className = 'text_pole quicker-api__model-quick-native';
+        select.setAttribute('aria-label', `${profile.name} 模型选择`);
+
+        const groups = groupByFamily(modelNames);
+        // 只有一个家族且数量不多时，不显示 optgroup，扁平列表更清爽
+        if (groups.length <= 1) {
+            modelNames.forEach(name => {
+                const opt = document.createElement('option');
+                opt.value = name;
+                opt.textContent = name;
+                if (name === currentModel) opt.selected = true;
+                select.appendChild(opt);
+            });
+        } else {
+            groups.forEach(({ family, models: familyModels }) => {
+                const og = document.createElement('optgroup');
+                // 单个条目的家族不必标数量，避免满屏「· 1」
+                og.label = familyModels.length > 1 ? `${family} · ${familyModels.length}` : family;
+                familyModels.forEach(name => {
+                    const opt = document.createElement('option');
+                    opt.value = name;
+                    opt.textContent = name;
+                    if (name === currentModel) opt.selected = true;
+                    og.appendChild(opt);
+                });
+                select.appendChild(og);
+            });
+        }
+
+        select.addEventListener('change', event => {
+            const value = event.target.value;
+            if (!value) return;
+            void useProviderModel(profile, value);
+            closeQuickActionMenu();
+        });
+
+        const li = $('<li class="list-group-item ctx-item quicker-api__model-quick-picker" role="listitem">')
+            .append(select);
+        // 打开菜单后自动把原生下拉弹出来，少点一次
+        queueMicrotask(() => {
+            try { select.focus(); } catch (_) { /* 忽略 */ }
+        });
+        return li;
+    };
+
     const groupHeader = text => $('<li class="list-group-item ctx-header quicker-api__model-quick-group" role="presentation">').append($('<span>').text(text));
     const modelEntry = (model, owner) => {
         const isActive = Boolean(current) && model === current && owner && owner.id === activeProfileId;
@@ -5647,23 +5697,22 @@ function openQuickModelMenu(anchor, placement) {
         if (view === 'models' && activeChannel) {
             menu.append(backEntry());
             menu.append(groupHeader(activeChannel.name));
-            let modelCount = 0;
             const favorites = normalizeModelList(activeChannel.availableModels || []);
             const fetched = profileFetchedModels(activeChannel);
             const base = activeChannel.id === activeProfileId ? [current, ...favorites, ...fetched] : [...favorites, ...fetched];
             const modelNames = [...new Set(base.filter(Boolean))]
                 .filter(model => matchesModelSearch(model, query));
-            modelCount = modelNames.length;
-            // 模型上百条时按家族分组，每组一个可折叠标题；组内保持原顺序。
-            const groups = groupByFamily(modelNames);
-            groups.forEach(({ family, models: familyModels }) => {
-                if (groups.length > 1) menu.append(groupHeader(`${family} · ${familyModels.length}`));
-                append(familyModels.map(model => modelEntry(model, activeChannel)));
-            });
-            if (query && hasManagedModels(activeChannel.format) && !favorites.includes(query) && !fetched.includes(query)) {
-                menu.append(addEntry(activeChannel)); modelCount++;
+            if (modelNames.length) {
+                // 和 API 专页的模型选择栏一致：原生 <select> + <optgroup>。
+                // 之前自己造滚动浮层，手机上滚不动、位置也不对；
+                // 改用原生控件后滚动和分组完全交给系统，不会再出兼容问题。
+                menu.append(nativeModelPicker(activeChannel, modelNames));
             }
-            if (!modelCount) menu.append(emptyEntry('该渠道暂无模型；输入 ID 回车即可添加'));
+            // 不在列表里的模型 ID 依然支持回车添加
+            if (query && hasManagedModels(activeChannel.format) && !favorites.includes(query) && !fetched.includes(query)) {
+                menu.append(addEntry(activeChannel));
+            }
+            if (!modelNames.length && !query) menu.append(emptyEntry('该渠道暂无模型；输入 ID 回车即可添加'));
             return;
         }
 
@@ -5731,8 +5780,12 @@ function openQuickModelMenu(anchor, placement) {
             const el = menu[0];
             el.style.maxHeight = `${available}px`;
             el.style.position = 'fixed';
-            el.style.bottom = ''; // 清空，避免叠加
-            el.style.top = `${Math.max(topLimit, bottomLimit - available)}px`;
+            el.style.bottom = ''; // 清空，避免与 top 叠加
+            // 先按内容自然高度量一次；内容短时贴住输入框底边向上排，
+            // 内容长时再撑满可用高度，避免短菜单飘到屏幕顶部。
+            el.style.top = '0px';
+            const natural = Math.min(el.scrollHeight || available, available);
+            el.style.top = `${Math.max(topLimit, bottomLimit - natural)}px`;
             const width = Math.min(el.getBoundingClientRect().width || 260, innerWidth - gap * 2);
             el.style.width = `${width}px`;
             const left = Math.max(gap, Math.min(anchorRect.left, innerWidth - width - gap));

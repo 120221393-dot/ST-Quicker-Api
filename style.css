@@ -2178,6 +2178,26 @@ dialog.popup:has(.quicker-api__placement-popup) .popup-controls {
     white-space: normal;
 }
 
+/* 原生模型选择器（对齐 API 专页的模型选择栏）。
+   用系统控件渲染，长列表的滚动与分组交给浏览器，避免自绘浮层
+   在手机 WebView 上滚不动、定位错位的问题。 */
+.quicker-api__model-quick-picker {
+    padding: 4px 6px;
+}
+
+.quicker-api__model-quick-native {
+    width: 100%;
+    min-height: 2.4em;
+    font-size: 1em;
+    background: var(--SmartThemeBlurTintColor);
+    color: var(--SmartThemeBodyColor);
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 6px;
+    padding: 6px 8px;
+    appearance: auto;
+    -webkit-appearance: menulist;
+}
+
 .quicker-api__model-quick-name {
     max-width: 100%;
     overflow: hidden;
