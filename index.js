@@ -5589,7 +5589,7 @@ function openQuickModelMenu(anchor, placement) {
                 ),
                 $('<div class="quicker-api__quick-menu-params fa-solid fa-chevron-right" title="查看该渠道的模型">'),
             )
-            .on('click', () => { view = 'models'; activeChannel = channel; searchInput.val(''); render(); });
+            .on('click', () => { view = 'models'; activeChannel = channel; searchInput.val(''); render(); if (!globalThis.matchMedia?.('(pointer: coarse)').matches) searchInput.trigger('focus'); });
     };
     const backEntry = () => $('<li class="list-group-item ctx-item quicker-api__model-quick-back" role="listitem" tabindex="0" data-quicker-api-actionable="true">')
         .append(
@@ -5597,6 +5597,36 @@ function openQuickModelMenu(anchor, placement) {
             $('<div class="qr--button-label">').text('返回渠道列表'),
         )
         .on('click', () => { view = 'channels'; activeChannel = null; searchInput.val(''); render(); });
+
+    // 模型可达数百条，必须限制菜单高度并让它内部滚动，否则会顶出屏幕。
+    // 不依赖 Popper 的 size modifier（ST 内置的旧版可能没有），自己按
+    // 锚点位置与视口高度算：锚点在上半屏→向下展开；下半屏→向上展开。
+    const fitToViewport = () => {
+        const rect = anchor.getBoundingClientRect();
+        const gap = 8;
+        const vh = (globalThis.visualViewport?.height || innerHeight) || 800;
+        const vw = (globalThis.visualViewport?.width || innerWidth) || 400;
+        const above = rect.top - gap * 2;
+        const below = vh - rect.bottom - gap * 2;
+        // 优先放在空间更大的一侧，但要保证至少能露出 8 行左右。
+        const placeAbove = placement === 'leftSendForm' ? true : above >= below;
+        const space = Math.max(160, placeAbove ? above : below);
+        menu[0].style.maxHeight = `${space}px`;
+        if (!quickActionPopper) {
+            const width = Math.min(menu[0].getBoundingClientRect().width || 260, vw - gap * 2);
+            const left = Math.max(gap, Math.min(rect.left, vw - width - gap));
+            menu.css({
+                position: 'fixed',
+                left: `${left}px`,
+                top: placeAbove ? '' : `${rect.bottom + gap}px`,
+                bottom: placeAbove ? `${vh - rect.top + gap}px` : '',
+                width: `${width}px`,
+            });
+        }
+    };
+    fitToViewport();
+    quickActionPopper?.update?.();
+    const closeOnViewport = () => closeQuickActionMenu();
 
     const render = () => {
         const query = normalizeText(searchInput.val());
@@ -5613,6 +5643,10 @@ function openQuickModelMenu(anchor, placement) {
         // Second level: the model catalog of the chosen channel.
         if (view === 'models' && activeChannel) {
             menu.append(backEntry());
+            // 切到模型视图后条目数量差异极大，重新按当前视口算一次高度
+            fitToViewport();
+            quickActionPopper?.update?.();
+            menu[0].scrollTop = 0;
             menu.append(groupHeader(activeChannel.name));
             let modelCount = 0;
             const favorites = normalizeModelList(activeChannel.availableModels || []);
@@ -5626,6 +5660,7 @@ function openQuickModelMenu(anchor, placement) {
                 menu.append(addEntry(activeChannel)); modelCount++;
             }
             if (!modelCount) menu.append(emptyEntry('该渠道暂无模型；输入 ID 回车即可添加'));
+            else if (modelCount > 8) menu.append(emptyEntry(`共 ${modelCount} 个模型 · 可滚动或搜索筛选`));
             return;
         }
 
@@ -5663,17 +5698,18 @@ function openQuickModelMenu(anchor, placement) {
     });
     quickActionPopper = globalThis.Popper?.createPopper?.(anchor, menu[0], {
         placement: placement === 'qrButtons' ? 'bottom-start' : placement === 'leftSendForm' ? 'top-start' : 'top-end',
+        strategy: 'fixed',
         modifiers: [
             { name: 'offset', options: { offset: [0, 8] } },
             { name: 'preventOverflow', options: { padding: 8 } },
+            // 模型可达数百条：由 Popper 按锚点可用空间反算高度上限，
+            // 保证菜单永远完整落在视口内，且内部可滚动。
             { name: 'computeStyles', options: { gpuAcceleration: false } },
         ],
     }) || null;
-    if (!quickActionPopper) {
-        const rect = anchor.getBoundingClientRect();
-        menu.css({ position: 'fixed', left: `${Math.max(8, Math.min(rect.left, innerWidth - menu.outerWidth() - 8))}px`, top: `${Math.max(8, rect.top - menu.outerHeight() - 8)}px` });
-    }
-    const closeOnViewport = () => closeQuickActionMenu();
+    // 键盘弹出/收起会改变可视高度，需重算高度而不是直接关闭菜单。
+    const refit = () => { fitToViewport(); quickActionPopper?.update?.(); };
+    globalThis.visualViewport?.addEventListener?.('resize', refit);
     $(document).on('pointerdown.quickerApiMenu', event => {
         if (!menu[0].contains(event.target) && !anchor.contains(event.target)) closeQuickActionMenu();
     }).on('focusin.quickerApiMenu', event => {
