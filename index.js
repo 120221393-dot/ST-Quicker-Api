@@ -5743,7 +5743,7 @@ function openQuickModelMenu(anchor, placement) {
     const gap = 8;
     // 菜单在内容高度基础上额外往上扩展的行数（实测单行 ~29px），
     // 让整块面板更宽松，接近满屏上沿。
-    const EXTRA_ROWS = 11;
+    const EXTRA_ROWS = 6;
     const EXTRA_ROW_PX = 29;
     const extraHeight = EXTRA_ROWS * EXTRA_ROW_PX;
     // 注意：leftSendForm 模式下 CPU 图标是插在左上角 #extensionsMenuButton
