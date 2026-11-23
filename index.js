@@ -5767,10 +5767,10 @@ function openQuickModelMenu(anchor, placement) {
             const bottomLimit = Math.min(formTop, vh) - gap;
             const topLimit = gap;
             const available = Math.max(180, Math.floor(bottomLimit - topLimit));
-            // el 是外层 panel（固定头部 + 滚动列表），只有列表滚动。
-            // display/flex 直接写在 JS 里：ST 的 .ctx-menu 类会覆盖外部样式表，
-            // 只靠 CSS 的话 panel 会退化成 block，子元素撑破容器。
-            const el = menu[0];
+            // el 必须是外层 panel：头部和列表都在它里面。
+            // 之前误用内层列表 menu[0]，panel 本身没定位，
+            // 头部跟着 static 的 panel 落到文档末尾（屏幕外），看起来就是「窗口没了」。
+            const el = panel[0];
             el.style.display = 'flex';
             el.style.flexDirection = 'column';
             el.style.minHeight = '0';
@@ -5846,7 +5846,7 @@ function openQuickModelMenu(anchor, placement) {
     // 菜单里滑动模型列表时事件冒泡上去，菜单会瞬间被关掉，
     // 看起来就像「滑动时整个界面跟着动」。
     const closeOnViewport = event => {
-        if (event && menu[0].contains(event.target)) return;
+        if (event && panel[0].contains(event.target)) return;
         closeQuickActionMenu();
     };
     $(window).on('resize.quickerApiMenu blur.quickerApiMenu', closeOnViewport);
@@ -5876,9 +5876,9 @@ function openQuickModelMenu(anchor, placement) {
         // 点在触发按钮上不关闭：否则会「先关后开」，
         // 重开时 anchor 位置已经变了，面板就定位到别处（画面跑偏）。
         if (event.target?.closest?.('.quicker-api__quick-entry')) return;
-        if (!menu[0].contains(event.target) && !anchor.contains(event.target)) closeQuickActionMenu();
+        if (!panel[0].contains(event.target) && !anchor.contains(event.target)) closeQuickActionMenu();
     }).on('focusin.quickerApiMenu', event => {
-        if (!menu[0].contains(event.target) && event.target !== anchor) closeQuickActionMenu();
+        if (!panel[0].contains(event.target) && event.target !== anchor) closeQuickActionMenu();
     }).on('keydown.quickerApiMenu', event => {
         if (event.key === 'Escape') { event.preventDefault(); closeQuickActionMenu(); anchor.focus?.(); }
         if (event.key === 'Tab') closeQuickActionMenu();
